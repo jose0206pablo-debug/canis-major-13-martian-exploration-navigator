@@ -7,12 +7,7 @@ import { WAYPOINT_LAYER_ID } from '../data/layers'
 import type { Layer, MapPoint, RasterLayerId, Selection } from '../data/types'
 import { isInterpolated, type Waypoint } from '../data/waypoints'
 import type { LonLat } from '../analysis/geodesy'
-import { nominalDiskPolygon, SECTOR_A_EXTENT } from '../analysis/context'
 
-// V1.1 · Contexto esquemático en el mapa: disco NOMINAL de Jezero (Gazetteer) y marco del Sector A (extensión CTX).
-const DISK = nominalDiskPolygon(180).map((p) => [p.lat, p.lon] as [number, number])
-const SECTOR_LATLNG = L.latLngBounds([SECTOR_A_EXTENT.south, SECTOR_A_EXTENT.west], [SECTOR_A_EXTENT.north, SECTOR_A_EXTENT.east])
-const CONTEXT_BOUNDS = L.latLngBounds(DISK).extend(SECTOR_LATLNG)
 
 type OpacityLayer = L.Layer & { setOpacity(opacity: number): unknown }
 type ProjImageOverlay = (url: string, bounds: L.Bounds, options?: L.ImageOverlayOptions) => OpacityLayer
@@ -90,24 +85,26 @@ export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, wa
     map.createPane('waypoints').style.zIndex = '390'
     // Recorrido hipotético por encima de los waypoints; sin interacción para que los clics lleguen al mapa.
     map.createPane('route').style.zIndex = '395'
-    // V1.1: contexto esquemático (por debajo de los waypoints). Solo líneas y rótulos; no imita imagen orbital.
-    map.createPane('context').style.zIndex = '380'
-    // V1.1: el encuadre inicial muestra Jezero (disco nominal) con el Sector A dentro: Marte → Jezero → Sector A.
-    const sector = geographic(MARS_CRS_BOUNDS).extend(CONTEXT_BOUNDS)
-    // Margen superior algo mayor para el rótulo del disco nominal, que se dibuja por encima de su borde norte.
-    const fitSector = () => map.fitBounds(sector, { paddingTopLeft: [12, 34], paddingBottomRight: [12, 12] })
+    // V1.4.1: el visor ES el territorio científico (Sector A = envolvente de los productos CTX). Solo NAVEGACIÓN; no cambian
+    // CRS, coordenadas ni datos. El zoom mínimo es el menor con el visor LLENO de Sector A (vista de conjunto que llena el
+    // visor), y el desplazamiento no sale de él. Así el visor nunca es mayor que los límites: con márgenes, Leaflet podía
+    // quedar sin responder al acercar tras un arrastre. Jezero (disco nominal) se explica en la entrada, no aquí.
+    const sector = geographic(MARS_CRS_BOUNDS)
+    const applyLimits = () => {
+      map.setMinZoom(0)
+      const fill = map.getBoundsZoom(sector, true) // menor zoom con el visor lleno de Sector A
+      map.setMinZoom(Math.min(fill, MARS_CRS_RESOLUTIONS.length - 1))
+    }
+    const fitSector = () => {
+      applyLimits()
+      map.setView(sector.getCenter(), map.getMinZoom(), { animate: false })
+    }
+    map.setMaxBounds(sector)
+    map.options.maxBoundsViscosity = 1
     fitSector()
-    map.setMaxBounds(sector.pad(0.25))
-    const context = L.layerGroup().addTo(map)
-    L.polygon(DISK, { pane: 'context', color: '#cfe3d8', weight: 1.5, opacity: 0.85, dashArray: '6 6', fill: false, interactive: false }).addTo(context)
-    L.rectangle(SECTOR_LATLNG, { pane: 'context', color: '#f5b86a', weight: 1.5, opacity: 0.95, fill: false, interactive: false }).addTo(context)
-    const label = (latlng: [number, number], html: string, cls: string) => L.marker(latlng, { pane: 'context', interactive: false, keyboard: false, icon: L.divIcon({ className: `context-label ${cls}`, html, iconSize: undefined }) }).addTo(context)
-    const north = DISK.reduce((a, b) => (b[0] > a[0] ? b : a))
-    label([north[0], north[1]], 'Jezero<br><em>disco nominal aprox. · no es el borde real</em>', 'disk')
-    label([SECTOR_A_EXTENT.south, SECTOR_A_EXTENT.west], 'Sector A · datos CTX de alta resolución', 'sector')
     // El contenedor puede cambiar de tamaño tras el primer render (maquetación, aviso cerrado, giro del móvil).
     const container = host.current
-    const resizeObserver = new ResizeObserver(() => map.invalidateSize())
+    const resizeObserver = new ResizeObserver(() => { map.invalidateSize(); applyLimits() })
     resizeObserver.observe(container)
     const frame = requestAnimationFrame(() => { map.invalidateSize(); fitSector() })
     L.control.scale({ metric: true, imperial: false, maxWidth: 160 }).addTo(map)

@@ -7,7 +7,7 @@ import { JEZERO_NOMINAL, SECTOR_A_EXTENT } from '../analysis/context'
  * ortográfica. No contienen ni imitan imagen orbital ni datos georreferenciados. El disco de Jezero es el NOMINAL del
  * Gazetteer (aproximado, no el borde real) y el Sector A es la extensión PDS3 de D-001, igual que en el mapa.
  */
-export type EntryStage = 'mars' | 'jezero' | 'done'
+export type EntryStage = 'mars' | 'done'
 
 export const CONTEXT_LABEL = 'Vista de contexto · esquema'
 export const SCIENCE_LABEL = 'Datos científicos georreferenciados'
@@ -134,25 +134,31 @@ function JezeroView() {
   </svg>
 }
 
-const STEPS: { id: EntryStage | 'sector'; label: string }[] = [{ id: 'mars', label: 'Marte' }, { id: 'jezero', label: 'Jezero' }, { id: 'sector', label: 'Sector A' }]
+const STEPS: { id: 'mars' | 'jezero' | 'sector'; label: string }[] = [{ id: 'mars', label: 'Marte' }, { id: 'jezero', label: 'Jezero' }, { id: 'sector', label: 'Sector A' }]
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-/** Pantalla de entrada (diálogo). `stage` lo controla App; al entrar al Sector A se desvanece y llama a `onEnterSector`. */
-export function PlanetaryEntry({ stage, onStage, onEnterSector }: { stage: Exclude<EntryStage, 'done'>; onStage: (stage: EntryStage) => void; onEnterSector: () => void }) {
-  const [leaving, setLeaving] = useState(false)
+/**
+ * Pantalla de entrada (diálogo). V1.4.1: MARTE → ENTRAR → SECTOR A. Un solo CTA; la etapa Jezero es solo una transición
+ * contextual breve (≈ 1 s en total): Marte se acerca a Jezero, el esquema Jezero → Sector A se acerca al Sector A y la
+ * entrada se desvanece sobre el mapa científico, que ya está montado debajo.
+ */
+export function PlanetaryEntry({ onEnterSector }: { onEnterSector: () => void }) {
+  const [phase, setPhase] = useState<'mars' | 'jezero' | 'sector'>('mars')
   const primary = useRef<HTMLButtonElement>(null)
-  useEffect(() => { primary.current?.focus({ preventScroll: true }) }, [stage])
+  useEffect(() => { primary.current?.focus({ preventScroll: true }) }, [])
   function enter() {
+    if (phase !== 'mars') return
     if (reducedMotion()) { onEnterSector(); return }
-    setLeaving(true)
-    window.setTimeout(onEnterSector, 520)
+    setPhase('jezero')
+    window.setTimeout(() => setPhase('sector'), 520)
+    window.setTimeout(onEnterSector, 1000)
   }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onEnterSector() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onEnterSector])
-  return <div className={`entry stage-${stage}${leaving ? ' leaving' : ''}`} role="dialog" aria-modal="true" aria-labelledby="entry-title">
+  return <div className={`entry phase-${phase}`} role="dialog" aria-modal="true" aria-labelledby="entry-title">
     <button type="button" className="entry-skip" onClick={onEnterSector}>Saltar introducción →</button>
     <div className="entry-brand">
       <h2 id="entry-title" className="entry-title">CANIS MAJOR <span className="entry-num">13</span></h2>
@@ -160,41 +166,33 @@ export function PlanetaryEntry({ stage, onStage, onEnterSector }: { stage: Exclu
       <p className="entry-event">NASA Space Apps Challenge 2026</p>
     </div>
     <div className="entry-stage-area">
-      <div className="entry-layer entry-layer-mars" style={{ transformOrigin: `${JEZERO_ON_GLOBE_PCT.x}% ${JEZERO_ON_GLOBE_PCT.y}%` }} aria-hidden={stage !== 'mars'}>
+      <div className="entry-layer entry-layer-mars" style={{ transformOrigin: `${JEZERO_ON_GLOBE_PCT.x}% ${JEZERO_ON_GLOBE_PCT.y}%` }} aria-hidden={phase !== 'mars'}>
         <MarsGlobe />
         {/* Pulso fuera del SVG: el globo (con filtros) queda estático y no se repinta en cada fotograma. */}
         <span className="entry-pulse" style={{ left: `${JEZERO_ON_GLOBE_PCT.x}%`, top: `${JEZERO_ON_GLOBE_PCT.y}%` }} aria-hidden="true" />
-        {stage === 'mars' && <button type="button" className="entry-hotspot" style={{ left: `${JEZERO_ON_GLOBE_PCT.x}%`, top: `${JEZERO_ON_GLOBE_PCT.y}%` }} onClick={() => onStage('jezero')} aria-label="Explorar el cráter Jezero" />}
+        {phase === 'mars' && <button type="button" className="entry-hotspot" style={{ left: `${JEZERO_ON_GLOBE_PCT.x}%`, top: `${JEZERO_ON_GLOBE_PCT.y}%` }} onClick={enter} aria-label="Entrar al Sector A del cráter Jezero" />}
       </div>
-      <div className="entry-layer entry-layer-jezero" aria-hidden={stage !== 'jezero'}>
+      <div className="entry-layer entry-layer-jezero" aria-hidden="true">
         <JezeroView />
       </div>
       <p className="entry-context-label">{CONTEXT_LABEL}</p>
     </div>
     <div className="entry-actions">
       <ol className="entry-steps" aria-label="Recorrido de entrada">
-        {STEPS.map((s) => <li key={s.id} className={s.id === stage ? 'current' : ''} aria-current={s.id === stage ? 'step' : undefined}>{s.label}</li>)}
-        <li className="science">Mapa científico</li>
+        {STEPS.map((s) => <li key={s.id} className={s.id === phase ? 'current' : ''} aria-current={s.id === phase ? 'step' : undefined}>{s.label}</li>)}
       </ol>
-      {stage === 'mars' ? <>
-        <p className="entry-lead">Empieza en Marte. Llega al cráter Jezero. Analiza el Sector A con datos orbitales reales.</p>
-        <button ref={primary} type="button" className="entry-cta" onClick={() => onStage('jezero')}>Explorar Jezero</button>
-      </> : <>
-        <p className="entry-lead">Cráter Jezero, 47,5 km de diámetro nominal. El <strong>Sector A</strong> es la zona con imagen CTX de 6 m y relieve de 20 m: ahí empiezan los datos científicos.</p>
-        <div className="entry-cta-row">
-          <button ref={primary} type="button" className="entry-cta" onClick={enter}>Entrar al Sector A</button>
-          <button type="button" className="entry-back" onClick={() => onStage('mars')}>← Marte</button>
-        </div>
-      </>}
+      <p className="entry-lead">Empieza en Marte. Entra en el cráter Jezero y explora el Sector A con datos orbitales reales.</p>
+      <button ref={primary} type="button" className="entry-cta" onClick={enter} disabled={phase !== 'mars'}>Entrar al Sector A</button>
     </div>
   </div>
 }
 
 /** Contexto compacto dentro del mapa científico: sustituye al antiguo «¿Dónde estamos?». */
-export function ContextTrail({ onPlanetary }: { onPlanetary: () => void }) {
+export function ContextTrail({ onPlanetary, tech }: { onPlanetary: () => void; tech?: string }) {
   return <nav className="context-trail" aria-label="Contexto">
     <ol><li>Marte</li><li>Jezero</li><li aria-current="location">Sector A</li></ol>
     <p><strong>{SCIENCE_LABEL}</strong> · {SCIENCE_DETAIL}</p>
+    {tech && <p className="context-trail-tech">{tech}</p>}
     <button type="button" className="context-trail-back" onClick={onPlanetary}>Vista planetaria</button>
   </nav>
 }

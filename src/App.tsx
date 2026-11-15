@@ -131,28 +131,20 @@ function App() {
   }
 
   return <>
-  {introOpen && <PlanetaryEntry stage={entryStage} onStage={setEntryStage} onEnterSector={enterSector} />}
+  {introOpen && <PlanetaryEntry onEnterSector={enterSector} />}
   <main className="app-shell" inert={introOpen} aria-hidden={introOpen || undefined}>
-    <header className="topbar">
+    {/* V1.4.1: cabecera de una sola franja. CANIS MAJOR 13 es el único bloque dominante; la salvaguarda va a la derecha;
+        la información técnica pasa a la línea de contexto del mapa y la explicación de datos, al panel de capas. */}
+    <header className="topbar compact">
       <div className="brand">
         <h1 className="brand-title">CANIS MAJOR <span className="brand-num">13</span></h1>
-        <p className="brand-descriptor">Martian Exploration Navigator</p>
-        <p className="brand-event">NASA Space Apps Challenge 2026</p>
+        <p className="brand-sub">Martian Exploration Navigator <span>· NASA Space Apps Challenge 2026</span></p>
       </div>
-      <div className="topbar-side">
-        <ol className="method-strip" aria-label="Qué hace CANIS">
-          <li><strong>Observar</strong> CTX</li>
-          <li><strong>Comprender</strong> DTM / relieve</li>
-          <li><strong>Comparar</strong> escenarios hipotéticos</li>
-        </ol>
-        <p className="tagline">Explora el Sector A del cráter Jezero (Marte) con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p>
-        <div className="status-summary" aria-label="Estado de los datos"><strong>Mapa 2D · IAU_2015:49910</strong><span>{status}</span></div>
-      </div>
+      <DisclaimerBanner />
     </header>
-    <DisclaimerBanner />
     <section className="explorer-layout" aria-label="Explorador cartográfico de Jezero">
-      <aside className="left-panel panel"><p className="step-kicker layers-kicker">1 · Observar (CTX) · 2 · Comprender (DTM / relieve)</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
-      <section className="map-column with-trail"><ContextTrail onPlanetary={() => setEntryStage('mars')} /><div className="map-stage" ref={mapStageRef}><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
+      <aside className="left-panel panel"><p className="step-kicker layers-kicker">1 · Observar (CTX) · 2 · Comprender (DTM / relieve)</p><p className="panel-intro">Sector A del cráter Jezero con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
+      <section className="map-column with-trail"><ContextTrail onPlanetary={() => setEntryStage('mars')} tech={`Mapa 2D · IAU_2015:49910 · ${status}`} /><div className="map-stage" ref={mapStageRef}><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
         <RoutePanel mode={routeMode} vertexCount={route.length} profile={profiles.main} sensitivity={profiles.sensitivity} gridStatus={gridStatus}
           onStart={() => { setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={finishRoute} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
