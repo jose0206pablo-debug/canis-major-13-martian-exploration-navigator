@@ -1,5 +1,5 @@
 import type { LonLat } from './geodesy'
-import type { ProfileResult } from './profile'
+import { PROFILE_SENSITIVITY_STEP_M, PROFILE_STEP_M, type ProfileResult } from './profile'
 
 /**
  * V1.3 · Comparación de escenarios hipotéticos (A = referencia ilustrativa, B = alternativa del usuario).
@@ -32,7 +32,7 @@ export interface MetricComparison {
   b: number
   /** b − a */
   delta: number
-  /** Umbral por debajo del cual la diferencia no se interpreta. */
+  /** Cambio observado en la métrica al muestrear a 10 m y a 40 m (sensibilidad al intervalo; NO es la incertidumbre total del DTM). */
   tolerance: number
   verdict: Verdict
 }
@@ -72,12 +72,16 @@ export function compareScenarios(a: ProfileResult, aSens: ProfileResult, b: Prof
   return { distance, gain, loss, noData, noDataAffects, sentence: describe(distance, gain, loss, noDataAffects) }
 }
 
+/** V1.3.1: texto para diferencias menores o iguales a la sensibilidad al intervalo de muestreo (no a la incertidumbre total del DTM). */
+export const SAMPLING_CHANGE = `al cambio observado al muestrear a ${PROFILE_STEP_M} m y ${PROFILE_SENSITIVITY_STEP_M} m`
+
 /** Conclusión solo descriptiva: cantidades y sentido de la diferencia, sin valoración. */
 export function describe(distance: MetricComparison, gain: MetricComparison, loss: MetricComparison, noDataAffects: boolean): string {
   const d = distance.verdict === 'same' ? 'B recorre la misma distancia horizontal que A' : `B recorre ${km(distance.delta)} ${distance.verdict === 'more' ? 'más' : 'menos'} que A`
   if (noDataAffects) return `${d}. El ascenso y el descenso no se comparan porque A o B tiene tramos sin datos del DTM.`
+  if (gain.verdict === 'same' && loss.verdict === 'same') return `${d}; sus diferencias de ascenso y de descenso son menores o iguales ${SAMPLING_CHANGE}.`
   const relief = (m: MetricComparison, name: string) => m.verdict === 'same'
-    ? `una diferencia de ${name} no distinguible con este muestreo`
+    ? `una diferencia de ${name} menor o igual ${SAMPLING_CHANGE}`
     : `${Math.abs(m.delta).toFixed(1)} m ${m.verdict === 'more' ? 'más' : 'menos'} de ${name}`
   return `${d}, acumula ${relief(gain, 'ascenso')} y ${relief(loss, 'descenso')}.`
 }

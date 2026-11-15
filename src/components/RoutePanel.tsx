@@ -55,26 +55,31 @@ export const ILLUSTRATIVE_READING = 'Única lectura: el perfil muestra el cambio
 const elev = (v: number | null) => (v === null ? 'sin dato' : `${v.toFixed(1)} m`)
 const signed = (v: number, text: string) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${text}`
 const deltaDistance = (m: MetricComparison) => (m.verdict === 'same' ? 'igual' : signed(m.delta, formatDistance(Math.abs(m.delta))))
-const deltaRelief = (m: MetricComparison) => (m.verdict === 'same' ? 'no distinguible con este muestreo' : signed(m.delta, `${Math.abs(m.delta).toFixed(1)} m`))
+const deltaRelief = (m: MetricComparison) => (m.verdict === 'same' ? `≤ cambio al muestrear a 10 m y ${PROFILE_SENSITIVITY_STEP_M} m` : signed(m.delta, `${Math.abs(m.delta).toFixed(1)} m`))
+/** V1.3.1: con tramos sin dato, el ascenso/descenso de ese escenario suma solo los tramos con dato: se marca «parcial». */
+const reliefValue = (v: number, partial: boolean) => <>{v.toFixed(1)} m{partial && <span className="partial">parcial</span>}</>
+export const SAMPLING_NOTE = 'Esta comparación refleja sensibilidad al intervalo de muestreo; no representa la incertidumbre total del DTM.'
+export const PARTIAL_NOTE = '«Parcial»: suma solo los tramos con dato del DTM; no es un total completo.'
 
 /** V1.3: tabla y conclusión descriptiva de la comparación A/B, con los dos perfiles en la misma escala. */
 function ComparisonView({ data }: { data: ComparisonData }) {
   const { result: r, a, b, scale } = data
   const noDataDelta = r.noData.b - r.noData.a
+  const aPartial = r.noData.aDistance > 0, bPartial = r.noData.bDistance > 0
   return <section className="comparison" aria-label="Comparación de escenarios hipotéticos">
     <h3>Comparación de los escenarios A y B</h3>
     <table className="comparison-table">
       <thead><tr><th scope="col">Métrica</th><th scope="col">A</th><th scope="col">B</th><th scope="col">Diferencia (B − A)</th></tr></thead>
       <tbody>
         <tr><th scope="row">Distancia horizontal</th><td>{formatDistance(r.distance.a)}</td><td>{formatDistance(r.distance.b)}</td><td>{deltaDistance(r.distance)}</td></tr>
-        <tr><th scope="row">Ascenso acumulado</th><td>{r.gain.a.toFixed(1)} m</td><td>{r.gain.b.toFixed(1)} m</td><td>{r.noDataAffects ? 'no comparable (sin dato)' : deltaRelief(r.gain)}</td></tr>
-        <tr><th scope="row">Descenso acumulado</th><td>{r.loss.a.toFixed(1)} m</td><td>{r.loss.b.toFixed(1)} m</td><td>{r.noDataAffects ? 'no comparable (sin dato)' : deltaRelief(r.loss)}</td></tr>
+        <tr><th scope="row">Ascenso acumulado</th><td>{reliefValue(r.gain.a, aPartial)}</td><td>{reliefValue(r.gain.b, bPartial)}</td><td>{r.noDataAffects ? 'no comparable (sin dato)' : deltaRelief(r.gain)}</td></tr>
+        <tr><th scope="row">Descenso acumulado</th><td>{reliefValue(r.loss.a, aPartial)}</td><td>{reliefValue(r.loss.b, bPartial)}</td><td>{r.noDataAffects ? 'no comparable (sin dato)' : deltaRelief(r.loss)}</td></tr>
         <tr><th scope="row">Sin datos del DTM</th><td>{r.noData.a.toFixed(1)} %</td><td>{r.noData.b.toFixed(1)} %</td><td>{noDataDelta === 0 ? 'igual' : signed(noDataDelta, `${Math.abs(noDataDelta).toFixed(1)} %`)}</td></tr>
       </tbody>
     </table>
     <p className="comparison-sentence" role="status">{r.sentence}</p>
-    {r.noDataAffects && <p className="route-notice">Hay tramos sin datos del DTM (A: {formatDistance(r.noData.aDistance)}; B: {formatDistance(r.noData.bDistance)}). Allí no se mide el relieve, así que el ascenso y el descenso no son comparables de forma completa.</p>}
-    <p className="comparison-method">Umbral para ascenso y descenso: ±{r.gain.tolerance.toFixed(1)} m y ±{r.loss.tolerance.toFixed(1)} m, lo que cambian al muestrear cada {PROFILE_SENSITIVITY_STEP_M} m en lugar de cada 10 m. Por debajo, la diferencia se indica como no distinguible.</p>
+    {r.noDataAffects && <p className="route-notice">Hay tramos sin datos del DTM (A: {formatDistance(r.noData.aDistance)}; B: {formatDistance(r.noData.bDistance)}). Allí no se mide el relieve, así que el ascenso y el descenso no son comparables de forma completa. {PARTIAL_NOTE}</p>}
+    <p className="comparison-method">Umbral para ascenso y descenso: ±{r.gain.tolerance.toFixed(1)} m y ±{r.loss.tolerance.toFixed(1)} m, el cambio observado al muestrear a 10 m y a {PROFILE_SENSITIVITY_STEP_M} m. Una diferencia menor o igual se indica así, sin interpretarla. {SAMPLING_NOTE}</p>
     <div className="comparison-charts">
       <p className="chart-label"><span className="swatch a" /> Escenario A</p>
       <ProfileChart profile={a} scale={scale} label="Escenario A" />

@@ -271,3 +271,5 @@
 }
 .comparison-table thead th { font-size: .58rem; }
 .comparison-table td:nth-child(2), .comparison-table td:nth-child(3) { white-space: nowrap; }
+/* V1.3.1 · marca «parcial» bajo los valores de ascenso/descenso con tramos sin dato */
+.comparison-table .partial { display: block; color: var(--caution); font-size: .62rem; font-weight: 600; }

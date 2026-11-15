@@ -7,7 +7,7 @@ import { toProjected, type Projected } from '../src/analysis/geodesy'
 import { selectIllustrativeRoute } from '../src/analysis/illustrative'
 import { computeProfile, PROFILE_SENSITIVITY_STEP_M, type ElevationSampler } from '../src/analysis/profile'
 import { ProfileChart } from '../src/components/ProfileChart'
-import { COMPARE_STATEMENT, RoutePanel, SCENARIOS_NOT } from '../src/components/RoutePanel'
+import { COMPARE_STATEMENT, PARTIAL_NOTE, RoutePanel, SAMPLING_NOTE, SCENARIOS_NOT } from '../src/components/RoutePanel'
 import { sampleBilinear, type ElevationGrid } from '../src/data/elevation'
 import { parseWaypoints } from '../src/data/waypoints'
 
@@ -50,11 +50,13 @@ describe('comparación de métricas topográficas (V1.3)', () => {
     expect(r.sentence).toMatch(/^B recorre \d+ m más que A, acumula [\d.]+ m más de ascenso y [\d.]+ m más de descenso\.$/)
   })
 
-  it('una diferencia dentro de la sensibilidad al muestreo se declara «no distinguible con este muestreo»', () => {
+  it('V1.3.1: una diferencia dentro del cambio observado al muestrear a 10 m y 40 m se describe así, sin presentarla como incertidumbre total', () => {
     const r = cmp(pair(A, ramp), pair(A, ramp))
     expect(r.distance.verdict).toBe('same')
     expect(r.gain.verdict).toBe('same')
-    expect(r.sentence).toBe('B recorre la misma distancia horizontal que A, acumula una diferencia de ascenso no distinguible con este muestreo y una diferencia de descenso no distinguible con este muestreo.')
+    expect(r.sentence).toBe('B recorre la misma distancia horizontal que A; sus diferencias de ascenso y de descenso son menores o iguales al cambio observado al muestrear a 10 m y 40 m.')
+    expect(r.sentence).not.toContain('no distinguible')
+    expect(r.sentence).not.toMatch(/incertidumbre/)
   })
 
   it('con tramos sin dato no concluye nada sobre ascenso ni descenso', () => {
@@ -111,6 +113,31 @@ describe('panel de comparación (V1.3)', () => {
     // La tabla y la conclusión no valoran.
     const block = html.slice(html.indexOf('<section class="comparison"'), html.indexOf('</section>', html.indexOf('<section class="comparison"'))).replace(/<[^>]+>/g, ' ').toLowerCase()
     for (const w of FORBIDDEN) expect(block).not.toContain(w)
+  })
+
+  it('V1.3.1: la nota de método aclara que es sensibilidad al muestreo, no incertidumbre total del DTM', () => {
+    const html = render({ comparison })
+    expect(html).toContain(SAMPLING_NOTE)
+    expect(SAMPLING_NOTE).toBe('Esta comparación refleja sensibilidad al intervalo de muestreo; no representa la incertidumbre total del DTM.')
+    expect(html).toContain('el cambio observado al muestrear a 10 m y a 40 m')
+    expect(html).not.toContain('no distinguible')
+    expect(html).not.toContain('class="partial"') // sin tramos sin dato, nada se marca como parcial
+  })
+
+  it('V1.3.1: con tramos sin dato, el ascenso y el descenso del escenario afectado se marcan «parcial» y la diferencia sigue «no comparable»', () => {
+    const nb = pair(B, (x, y) => (x > 700 ? null : hill(x, y)))
+    const nd = { result: cmp(a, nb), a: a.main, b: nb.main, scale: sharedProfileScale(a.main, nb.main) }
+    const html = render({ comparison: nd, profile: nb.main, sensitivity: nb.sens })
+    const rows = [...html.matchAll(/<tr><th scope="row">([^<]+)<\/th>(.*?)<\/tr>/g)].map((m) => [m[1], m[2]])
+    const row = (name: string) => rows.find(([n]) => n === name)![1]
+    for (const name of ['Ascenso acumulado', 'Descenso acumulado']) {
+      const cells = [...row(name).matchAll(/<td>(.*?)<\/td>/g)].map((m) => m[1])
+      expect(cells[0]).not.toContain('parcial') // A no tiene tramos sin dato
+      expect(cells[1]).toContain('<span class="partial">parcial</span>') // B sí
+      expect(cells[2]).toBe('no comparable (sin dato)')
+    }
+    expect(html).toContain(PARTIAL_NOTE)
+    expect(nd.result.sentence).not.toMatch(/de ascenso|de descenso/)
   })
 
   it('al trazar B: «Terminar en destino» y «Deshacer punto», sin perfil parcial ni comparación', () => {
