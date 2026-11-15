@@ -7,7 +7,6 @@ import { greatCircleDistance, toProjected } from '../src/analysis/geodesy'
 import { selectIllustrativeRoute } from '../src/analysis/illustrative'
 import { computeProfile } from '../src/analysis/profile'
 import { DisclaimerBanner, SAFEGUARD_LEAD, SAFEGUARD_LINK, SAFEGUARD_NOT_CERTIFIED, SAFEGUARD_TEXT } from '../src/components/DisclaimerBanner'
-import { LocatorInset } from '../src/components/LocatorInset'
 import { sampleBilinear, type ElevationGrid } from '../src/data/elevation'
 import { SCIENTIFIC_LIMITS } from '../src/data/safeguards'
 import { parseWaypoints, type Waypoint } from '../src/data/waypoints'
@@ -31,35 +30,8 @@ describe('disco nominal de Jezero (V1.1, A1e)', () => {
   })
 })
 
-describe('localizador esquemático y salvaguarda (V1.1)', () => {
-  it('rotula Jezero como disco nominal aproximado, no como borde real, y declara que no es imagen orbital', () => {
-    const html = renderToStaticMarkup(<LocatorInset />)
-    expect(html).toContain('disco nominal')
-    expect(html).toContain('no es el borde real')
-    expect(html).toContain('Sector A')
-    expect(html).toContain('cobertura CTX')
-    expect(html).toContain('sin imagen orbital')
-    expect(html).not.toMatch(/<image\b|<img\b/)
-  })
-
-  it('V1.2: el globo se rotula como vista de contexto y esquema, y la narrativa llega hasta CTX/DTM', () => {
-    const html = renderToStaticMarkup(<LocatorInset onExplore={() => undefined} />)
-    expect(html).toContain('Marte · vista de contexto')
-    expect(html).toContain('Esquema de ubicación · no es imagen orbital')
-    for (const step of ['Marte', 'Jezero', 'Sector A', 'CTX/DTM']) expect(html).toContain(`<li>${step}</li>`)
-    expect(html).toContain('Explorar Sector A')
-    expect(html).not.toMatch(/<image\b|<img\b|<pattern\b|<filter\b/)
-    // Sin «Explorar» si no hay acción conectada
-    expect(renderToStaticMarkup(<LocatorInset />)).not.toContain('Explorar Sector A')
-  })
-
-  it('V1.2: los gradientes del globo no repiten identificador entre el panel y el mapa', () => {
-    const ids = (html: string) => [...html.matchAll(/id="([^"]+)"/g)].map((m) => m[1])
-    const panel = ids(renderToStaticMarkup(<LocatorInset variant="panel" />))
-    expect(panel.length).toBeGreaterThan(0)
-    expect(panel.every((id) => id.startsWith('mars-panel-'))).toBe(true)
-  })
-
+describe('salvaguarda (V1.1–V1.3)', () => {
+  // V1.4: las pruebas del antiguo localizador pasan a tests/planetary-entry.test.tsx (entrada planetaria y contexto compacto).
   it('la salvaguarda es breve, visible y conserva los límites científicos', () => {
     const html = renderToStaticMarkup(<DisclaimerBanner />)
     // V1.2: línea visible «Interpretación preliminar… · Ver límites científicos»; todo lo demás, en el desplegable.
