@@ -7,16 +7,25 @@ import { InfoPanel } from './components/InfoPanel'
 import { LayerPanel } from './components/LayerPanel'
 import { Legend } from './components/Legend'
 import { MapView } from './components/MapView'
-import { RoutePanel, type GridStatus, type IllustrativeInfo, type RouteMode } from './components/RoutePanel'
+import { RoutePanel, type ComparisonData, type GridStatus, type IllustrativeInfo, type RouteMode } from './components/RoutePanel'
 import { LocatorInset } from './components/LocatorInset'
 import { selectIllustrativeRoute } from './analysis/illustrative'
+import { compareScenarios, finishAlternative, sharedProfileScale, sharesEndpoints, startAlternative as startAlternativeRoute } from './analysis/compare'
 import { toProjected, type LonLat } from './analysis/geodesy'
-import { computeProfile, PROFILE_SENSITIVITY_STEP_M, PROFILE_STEP_M } from './analysis/profile'
+import { computeProfile, PROFILE_SENSITIVITY_STEP_M, PROFILE_STEP_M, type ProfileResult } from './analysis/profile'
 import { loadElevationGrid, sampleBilinear, type ElevationGrid } from './data/elevation'
 import { catalog, RASTER_LAYER_IDS, WAYPOINT_LAYER_ID } from './data/layers'
 import { loadManifest, type DataManifest } from './data/manifest'
 import type { Layer, MapPoint, Selection } from './data/types'
 import { loadWaypoints, type Waypoint } from './data/waypoints'
+
+/** Perfil principal (≤ 10 m) y de sensibilidad (40 m) de una polilínea: el mismo cálculo para A, B y el recorrido libre. */
+function profilePair(grid: ElevationGrid | null, route: LonLat[]): { main: ProfileResult | null; sensitivity: ProfileResult | null } {
+  if (!grid || route.length < 2) return { main: null, sensitivity: null }
+  const vertices = route.map(toProjected)
+  const sampler = (x: number, y: number) => sampleBilinear(grid, x, y)
+  return { main: computeProfile(vertices, sampler, PROFILE_STEP_M), sensitivity: computeProfile(vertices, sampler, PROFILE_SENSITIVITY_STEP_M) }
+}
 
 type DataStatus = 'loading' | 'ready' | 'missing'
 const MISSING_DATA = 'No se encontraron los datos del mapa. Verifica que public/data/ esté incluido antes de compilar y que dist/data/ se publique junto con index.html (ver README.md).'
@@ -34,8 +43,9 @@ function App() {
   const [cursor, setCursor] = useState<MapPoint | null>(null)
   const [routeMode, setRouteMode] = useState<RouteMode>('idle')
   const [route, setRoute] = useState<LonLat[]>([])
-  // V1.1: 'illustrative' cuando el recorrido mostrado es el «Recorrido ilustrativo CANIS».
-  const [routeKind, setRouteKind] = useState<'user' | 'illustrative'>('user')
+  // V1.1: 'illustrative' cuando el recorrido mostrado es el escenario A (referencia ilustrativa).
+  // V1.3: 'alternative' cuando es la alternativa B, que comparte exactamente origen y destino con A.
+  const [routeKind, setRouteKind] = useState<'user' | 'illustrative' | 'alternative'>('user')
   // V1.2: «Explorar Sector A» solo dirige la atención al mapa existente (desplazamiento, foco y realce breve); no toca el zoom de Leaflet.
   const mapStageRef = useRef<HTMLDivElement>(null)
   const focusMap = useCallback(() => {
@@ -80,12 +90,28 @@ function App() {
   }
   const routeEndLabels = useMemo<[string, string] | undefined>(() => (illustrativeRoute ? [`Inicio · sol ${illustrativeRoute.start.sol}`, `Destino · sol ${illustrativeRoute.end.sol}`] : undefined), [illustrativeRoute])
   // Perfil con el intervalo principal (≤ 10 m) y, solo para mostrar la sensibilidad del desnivel, con 40 m.
-  const profiles = useMemo(() => {
-    if (!grid || route.length < 2) return { main: null, sensitivity: null }
-    const vertices = route.map(toProjected)
-    const sampler = (x: number, y: number) => sampleBilinear(grid, x, y)
-    return { main: computeProfile(vertices, sampler, PROFILE_STEP_M), sensitivity: computeProfile(vertices, sampler, PROFILE_SENSITIVITY_STEP_M) }
-  }, [grid, route])
+  const profiles = useMemo(() => profilePair(grid, route), [grid, route])
+  // V1.3: escenario A calculado con la MISMA función y los mismos vértices que «Ver escenario A», solo durante la comparación.
+  const comparingAlternative = routeKind === 'alternative' && Boolean(illustrativeRoute)
+  const referenceRoute = comparingAlternative ? illustrativeRoute!.vertices : undefined
+  const profilesA = useMemo(() => profilePair(grid, referenceRoute ?? []), [grid, referenceRoute])
+  const comparison = useMemo<ComparisonData | null>(() => {
+    if (!comparingAlternative || routeMode !== 'done' || !profiles.main || !profiles.sensitivity || !profilesA.main || !profilesA.sensitivity) return null
+    if (!sharesEndpoints(referenceRoute!, route)) return null // salvaguarda: nunca comparar extremos distintos
+    return { result: compareScenarios(profilesA.main, profilesA.sensitivity, profiles.main, profiles.sensitivity), a: profilesA.main, b: profiles.main, scale: sharedProfileScale(profilesA.main, profiles.main) }
+  }, [comparingAlternative, routeMode, profiles, profilesA, referenceRoute, route])
+  const referenceEndLabels = useMemo<[string, string] | undefined>(() => (illustrativeRoute ? [`Origen común · sol ${illustrativeRoute.start.sol}`, `Destino común · sol ${illustrativeRoute.end.sol}`] : undefined), [illustrativeRoute])
+  function startAlternative() {
+    if (!illustrativeRoute) return
+    setRoute(startAlternativeRoute(illustrativeRoute.vertices[0])); setRouteKind('alternative'); setRouteMode('drawing')
+  }
+  function finishRoute() {
+    if (routeKind === 'alternative' && illustrativeRoute) {
+      const [origin, destination] = illustrativeRoute.vertices
+      setRoute((current) => finishAlternative(current, origin, destination))
+    }
+    setRouteMode('done')
+  }
 
   function toggleLayer(layerId: string) {
     setVisibleLayerIds((current) => current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId])
@@ -101,18 +127,24 @@ function App() {
         <p className="brand-event">NASA Space Apps Challenge 2026</p>
       </div>
       <div className="topbar-side">
+        <ol className="method-strip" aria-label="Qué hace CANIS">
+          <li><strong>Observar</strong> CTX</li>
+          <li><strong>Comprender</strong> DTM / relieve</li>
+          <li><strong>Comparar</strong> escenarios hipotéticos</li>
+        </ol>
         <p className="tagline">Explora el Sector A del cráter Jezero (Marte) con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p>
         <div className="status-summary" aria-label="Estado de los datos"><strong>Mapa 2D · IAU_2015:49910</strong><span>{status}</span></div>
       </div>
     </header>
     <DisclaimerBanner />
     <section className="explorer-layout" aria-label="Explorador cartográfico de Jezero">
-      <aside className="left-panel panel"><LocatorInset variant="panel" onExplore={focusMap} /><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
-      <section className="map-column"><div className="map-stage" ref={mapStageRef}><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind} routeEndLabels={routeEndLabels} /><LocatorInset variant="map" onExplore={focusMap} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
+      <aside className="left-panel panel"><LocatorInset variant="panel" onExplore={focusMap} /><p className="step-kicker layers-kicker">1 · Observar (CTX) · 2 · Comprender (DTM / relieve)</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
+      <section className="map-column"><div className="map-stage" ref={mapStageRef}><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /><LocatorInset variant="map" onExplore={focusMap} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
         <RoutePanel mode={routeMode} vertexCount={route.length} profile={profiles.main} sensitivity={profiles.sensitivity} gridStatus={gridStatus}
-          onStart={() => { setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={() => setRouteMode('done')} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
-          illustrative={illustrativeInfo} onShowIllustrative={() => { if (!illustrativeRoute) return; setRoute(illustrativeRoute.vertices); setRouteKind('illustrative'); setRouteMode('done') }} />
+          onStart={() => { setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={finishRoute} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
+          illustrative={illustrativeInfo} onShowIllustrative={() => { if (!illustrativeRoute) return; setRoute(illustrativeRoute.vertices); setRouteKind('illustrative'); setRouteMode('done') }}
+          alternativeActive={routeKind === 'alternative'} onStartAlternative={startAlternative} onUndo={() => setRoute((current) => (current.length > 1 ? current.slice(0, -1) : current))} comparison={comparison} />
         <InfoPanel point={selectedPoint} onClear={() => setSelectedPoint(null)} />
       </aside>
     </section>

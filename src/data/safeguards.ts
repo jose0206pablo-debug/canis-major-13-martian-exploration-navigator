@@ -7,10 +7,13 @@ export const SCIENTIFIC_LIMITS = [
   'Jezero se muestra como disco nominal (aproximado); solo el Sector A tiene datos CTX de alta resolución.',
 ]
 
-/** V1.2 · Lo que el recorrido NO es (desplegable, siempre en el DOM). */
+/** V1.2/V1.3 · Lo que el escenario A NO es (desplegable, siempre en el DOM). */
 export const ILLUSTRATIVE_IS_NOT = [
+  'Usa dos posiciones históricas documentadas; la línea recta entre ellas es una construcción de CANIS, no un dato de misión.',
   'No es el trayecto real que siguió Perseverance.',
+  'No se eligió por interés geológico: los extremos salen únicamente de la regla reproducible.',
+  'No es una recomendación.',
   'No es seguro: no evalúa obstáculos, pendientes locales ni riesgos.',
-  'No es óptimo: no se ha buscado el mejor camino.',
+  'No es óptimo: CANIS no busca ni calcula caminos.',
   'No certifica la transitabilidad del terreno.',
 ]

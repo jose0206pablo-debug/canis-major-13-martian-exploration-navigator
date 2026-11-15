@@ -6,7 +6,7 @@ import { JEZERO_NOMINAL, nominalDiskPolygon, SECTOR_A_EXTENT } from '../src/anal
 import { greatCircleDistance, toProjected } from '../src/analysis/geodesy'
 import { selectIllustrativeRoute } from '../src/analysis/illustrative'
 import { computeProfile } from '../src/analysis/profile'
-import { DisclaimerBanner, SAFEGUARD_LEAD, SAFEGUARD_LINK, SAFEGUARD_TEXT } from '../src/components/DisclaimerBanner'
+import { DisclaimerBanner, SAFEGUARD_LEAD, SAFEGUARD_LINK, SAFEGUARD_NOT_CERTIFIED, SAFEGUARD_TEXT } from '../src/components/DisclaimerBanner'
 import { LocatorInset } from '../src/components/LocatorInset'
 import { sampleBilinear, type ElevationGrid } from '../src/data/elevation'
 import { SCIENTIFIC_LIMITS } from '../src/data/safeguards'
@@ -63,7 +63,8 @@ describe('localizador esquemático y salvaguarda (V1.1)', () => {
   it('la salvaguarda es breve, visible y conserva los límites científicos', () => {
     const html = renderToStaticMarkup(<DisclaimerBanner />)
     // V1.2: línea visible «Interpretación preliminar… · Ver límites científicos»; todo lo demás, en el desplegable.
-    expect(html).toMatch(new RegExp(`<summary>.*${SAFEGUARD_LEAD}.*${SAFEGUARD_LINK}.*</summary>`))
+    expect(html).toMatch(new RegExp(`<summary>.*${SAFEGUARD_LEAD}.*${SAFEGUARD_NOT_CERTIFIED}.*${SAFEGUARD_LINK}.*</summary>`))
+    expect(SAFEGUARD_NOT_CERTIFIED).toBe('No es navegación certificada') // V1.3: visible sin desplegar (corrección de Codex)
     expect(html).toContain(SAFEGUARD_TEXT)
     for (const word of ['seguridad', 'habitabilidad', 'transitabilidad', 'movilidad de astronautas']) expect(SAFEGUARD_TEXT).toContain(word)
     expect(SAFEGUARD_TEXT).toContain('no es navegación certificada')

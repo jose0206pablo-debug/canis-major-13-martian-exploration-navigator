@@ -61,10 +61,12 @@ describe('recorrido ilustrativo CANIS (V1.1)', () => {
   const info = { available: true, active: true, start: { rmc: '3_0', sol: 13 }, end: { rmc: '64_0', sol: 1354, elevGeoid: -1785.999 } }
   const withIllustrative = (props: Partial<Parameters<typeof RoutePanel>[0]> = {}) => render({ illustrative: info, onShowIllustrative: noop, ...props })
 
-  it('ofrece «Ver recorrido ilustrativo CANIS» junto a «Trazar mi recorrido»', () => {
+  it('ofrece «Ver escenario A» junto a «Trazar mi recorrido» (V1.3: y «Trazar alternativa B» si hay comparador)', () => {
     const html = withIllustrative({ mode: 'idle', profile: null, sensitivity: null, vertexCount: 0 })
-    expect(html).toContain('Ver recorrido ilustrativo CANIS')
+    expect(html).toContain('Ver escenario A')
     expect(html).toContain('Trazar mi recorrido')
+    expect(html).not.toContain('Trazar alternativa B')
+    expect(withIllustrative({ mode: 'idle', profile: null, sensitivity: null, vertexCount: 0, onStartAlternative: noop })).toContain('Trazar alternativa B')
   })
 
   it('explica la regla de selección y que no es una ruta segura, óptima ni transitable', () => {
@@ -81,7 +83,8 @@ describe('recorrido ilustrativo CANIS (V1.1)', () => {
 
   it('V1.2: contextualiza el recorrido sin atribuir interés científico a la elección de los puntos', () => {
     const html = withIllustrative()
-    expect(ILLUSTRATIVE_HEADING).toBe('Del suelo de Jezero hacia el borde occidental')
+    expect(ILLUSTRATIVE_HEADING).toBe('Del suelo de Jezero hacia la zona del borde occidental') // V1.3: formulación de Codex
+    expect(ILLUSTRATIVE_TITLE).toBe('Escenario A · referencia ilustrativa')
     expect(ILLUSTRATIVE_NOTICE).toBe('Comparación topográfica sobre una línea recta ilustrativa entre dos posiciones históricas.')
     expect(html).toContain(ILLUSTRATIVE_HEADING)
     expect(html).toContain('Regla reproducible')

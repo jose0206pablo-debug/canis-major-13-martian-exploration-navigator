@@ -33,6 +33,9 @@ type Props = {
   /** 'illustrative' dibuja el «Recorrido ilustrativo CANIS» con su propio estilo y rótulos de inicio y destino. */
   routeVariant?: 'user' | 'illustrative'
   routeEndLabels?: [string, string]
+  /** V1.3: escenario A dibujado como referencia (estilo ilustrativo) bajo la alternativa B. Solo dibujo: no cambia zoom ni encuadre. */
+  referenceRoute?: LonLat[]
+  referenceEndLabels?: [string, string]
 }
 
 const crs = createMarsCrs()
@@ -40,7 +43,21 @@ const projImageOverlay = (L as unknown as { Proj: { imageOverlay: ProjImageOverl
 const projected = (b: ProjectedBounds) => L.bounds([b.west, b.south], [b.east, b.north])
 const geographic = (b: ProjectedBounds) => L.latLngBounds(crs.unproject(L.point(b.west, b.south)), crs.unproject(L.point(b.east, b.north)))
 
-export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, waypoints, elevationAt, onPointSelect, onCursorChange, drawMode, route, onAddVertex, routeVariant = 'user', routeEndLabels }: Props) {
+/** Dibuja una polilínea de recorrido con sus vértices (mismo estilo que la V1.1 para 'user' e 'illustrative'). */
+function drawRoute(group: L.LayerGroup, route: LonLat[], variant: 'user' | 'illustrative', endLabels?: [string, string]) {
+  const latlngs = route.map((v) => [v.lat, v.lon] as [number, number])
+  // Línea recta en el CRS entre vértices: es exactamente el trazado que se muestrea para el perfil.
+  L.polyline(latlngs, { pane: 'route', color: '#0b1512', weight: 6, opacity: 0.75, interactive: false }).addTo(group)
+  const illustrative = variant === 'illustrative'
+  L.polyline(latlngs, { pane: 'route', color: illustrative ? '#7fdcff' : '#ffffff', weight: illustrative ? 3 : 2.5, opacity: 1, dashArray: illustrative ? '10 6' : undefined, interactive: false }).addTo(group)
+  route.forEach((v, i) => {
+    const end = i === 0 || i === route.length - 1
+    const marker = L.circleMarker([v.lat, v.lon], { pane: 'route', radius: end ? 5 : 3.5, color: '#0b1512', weight: 1.5, fillColor: i === 0 ? '#9be37a' : illustrative ? '#7fdcff' : '#ffffff', fillOpacity: 1, interactive: false }).addTo(group)
+    if (illustrative && end && endLabels) marker.bindTooltip(endLabels[i === 0 ? 0 : 1], { permanent: true, direction: i === 0 ? 'right' : 'left', className: 'route-end-label' })
+  })
+}
+
+export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, waypoints, elevationAt, onPointSelect, onCursorChange, drawMode, route, onAddVertex, routeVariant = 'user', routeEndLabels, referenceRoute, referenceEndLabels }: Props) {
   const host = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
   const vectorGroup = useRef<L.LayerGroup | null>(null)
@@ -122,18 +139,10 @@ export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, wa
     const group = routeGroup.current
     if (!group) return
     group.clearLayers()
-    if (!route.length) return
-    const latlngs = route.map((v) => [v.lat, v.lon] as [number, number])
-    // Línea recta en el CRS entre vértices: es exactamente el trazado que se muestrea para el perfil.
-    L.polyline(latlngs, { pane: 'route', color: '#0b1512', weight: 6, opacity: 0.75, interactive: false }).addTo(group)
-    const illustrative = routeVariant === 'illustrative'
-    L.polyline(latlngs, { pane: 'route', color: illustrative ? '#7fdcff' : '#ffffff', weight: illustrative ? 3 : 2.5, opacity: 1, dashArray: illustrative ? '10 6' : undefined, interactive: false }).addTo(group)
-    route.forEach((v, i) => {
-      const end = i === 0 || i === route.length - 1
-      const marker = L.circleMarker([v.lat, v.lon], { pane: 'route', radius: end ? 5 : 3.5, color: '#0b1512', weight: 1.5, fillColor: i === 0 ? '#9be37a' : illustrative ? '#7fdcff' : '#ffffff', fillOpacity: 1, interactive: false }).addTo(group)
-      if (illustrative && end && routeEndLabels) marker.bindTooltip(routeEndLabels[i === 0 ? 0 : 1], { permanent: true, direction: i === 0 ? 'right' : 'left', className: 'route-end-label' })
-    })
-  }, [route, routeVariant, routeEndLabels])
+    // V1.3: primero el escenario A de referencia; encima, el recorrido activo (alternativa B o recorrido propio).
+    if (referenceRoute && referenceRoute.length > 1) drawRoute(group, referenceRoute, 'illustrative', referenceEndLabels)
+    if (route.length) drawRoute(group, route, routeVariant, referenceRoute ? undefined : routeEndLabels)
+  }, [route, routeVariant, routeEndLabels, referenceRoute, referenceEndLabels])
 
   useEffect(() => {
     if (!mapRef.current || !manifest || rasters.current.ctx_ortho) return

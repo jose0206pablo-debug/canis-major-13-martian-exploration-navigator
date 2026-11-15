@@ -220,3 +220,54 @@
   .left-panel { order: 2; } .map-column { order: 1; min-height: 520px; } .right-panel { order: 3; }
   .panel { overflow: visible; } .map { min-height: 400px; }
 }
+
+/* ===== V1.3 · Jerarquía de identidad (ajusta los valores de la V1.2) ===== */
+.brand { gap: 6px; }
+.brand-title { font-size: clamp(2.2rem, 3.6vw, 3.5rem); letter-spacing: .08em; }
+.brand-descriptor { font-size: clamp(.86rem, 1.2vw, 1.08rem); }
+.brand-event { font-size: .72rem; letter-spacing: .2em; color: var(--text-2); }
+.topbar-side { gap: 6px; max-width: 540px; }
+.tagline { font-size: .76rem; color: var(--text-3); }
+.status-summary { font-size: .62rem; }
+/* Narrativa OBSERVAR → COMPRENDER → COMPARAR */
+.method-strip { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px 6px; color: var(--text-3); font-size: .7rem; }
+.method-strip li { display: inline-flex; align-items: baseline; gap: 4px; }
+.method-strip li + li::before { content: "→"; color: var(--line-strong); margin-right: 2px; }
+.method-strip strong { color: var(--text); font-family: var(--font-display); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: .7rem; }
+.step-kicker { margin: 0 0 4px; color: var(--text-3); font-size: .62rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.layers-kicker { margin-top: 2px; }
+/* Salvaguarda: «No es navegación certificada» visible sin dominar */
+.safeguard-cert { color: var(--text); font-weight: 600; }
+
+/* ===== V1.3 · Comparación de escenarios hipotéticos ===== */
+.compare-statement { margin: 0; padding: 6px 10px; border-left: 2px solid var(--accent); background: rgba(92, 200, 255, .06); color: var(--text); font-size: .76rem; font-weight: 600; line-height: 1.4; }
+.scenario-legend { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; color: var(--text-2); font-size: .72rem; line-height: 1.35; }
+.scenario-legend li { display: grid; grid-template-columns: 22px 1fr; gap: 6px; align-items: baseline; }
+.scenario-legend strong { color: var(--text); font-weight: 600; }
+.scenario-legend .scenario-not { display: block; color: var(--text-3); }
+/* Las muestras reproducen el dibujo del mapa: A cian discontinuo, B blanco continuo, posiciones de Perseverance naranja */
+.swatch { display: inline-block; width: 20px; height: 0; vertical-align: middle; }
+.swatch.a { border-top: 3px dashed #7fdcff; }
+.swatch.b { border-top: 2.5px solid #ffffff; }
+.swatch.mission { width: 9px; height: 9px; margin: 0 5px; border-radius: 50%; background: #f5b86a; }
+.comparison { display: grid; gap: 8px; }
+.comparison h3 { margin: 4px 0 0; }
+.comparison-table { width: 100%; border-collapse: collapse; font-size: .74rem; font-variant-numeric: tabular-nums; }
+.comparison-table th, .comparison-table td { padding: 5px 4px; border-bottom: 1px solid var(--line); text-align: right; vertical-align: top; overflow-wrap: anywhere; }
+.comparison-table thead th { color: var(--text-3); font-size: .62rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.comparison-table tbody th { color: var(--text-2); font-weight: 500; text-align: left; }
+.comparison-table td { color: var(--text); }
+.comparison-table td:last-child { color: var(--accent-soft); }
+.comparison-sentence { margin: 0; color: var(--text); font-size: .8rem; line-height: 1.45; }
+.comparison-method { margin: 0; color: var(--text-3); font-size: .68rem; line-height: 1.4; }
+.comparison-charts { display: grid; gap: 4px; }
+.chart-label { margin: 4px 0 0; display: flex; align-items: center; gap: 6px; color: var(--text-2); font-size: .7rem; font-weight: 600; }
+
+@media (max-width: 860px) { .method-strip { justify-content: flex-start; } }
+@media (max-width: 720px) {
+  .brand-title { font-size: min(2.2rem, 9.4vw); letter-spacing: .06em; }
+  .brand-descriptor { font-size: .78rem; }
+  .brand-event { font-size: .66rem; }
+}
+.comparison-table thead th { font-size: .58rem; }
+.comparison-table td:nth-child(2), .comparison-table td:nth-child(3) { white-space: nowrap; }

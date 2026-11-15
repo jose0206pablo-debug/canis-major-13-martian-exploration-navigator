@@ -1,6 +1,7 @@
 import { useState, type PointerEvent } from 'react'
 import { noDataRanges, validRuns, type ProfileResult } from '../analysis/profile'
 import { formatDistance } from '../utils/format'
+import type { SharedScale } from '../analysis/compare'
 
 const W = 320, H = 190
 const M = { top: 12, right: 12, bottom: 34, left: 52 }
@@ -16,25 +17,29 @@ function niceTicks(min: number, max: number, count: number): number[] {
   return ticks
 }
 
-/** Gráfico SVG de elevación frente a distancia horizontal. Los tramos sin dato se dejan en blanco y rayados. */
-export function ProfileChart({ profile }: { profile: ProfileResult }) {
+/**
+ * Gráfico SVG de elevación frente a distancia horizontal. Los tramos sin dato se dejan en blanco y rayados.
+ * V1.3: `scale` opcional para dibujar dos perfiles con el mismo rango vertical y la misma longitud horizontal.
+ */
+export function ProfileChart({ profile, scale, label }: { profile: ProfileResult; scale?: SharedScale | null; label?: string }) {
   const [hover, setHover] = useState<number | null>(null)
   const { samples, totalDistance, minElevation, maxElevation } = profile
   if (minElevation === null || maxElevation === null || totalDistance <= 0) return <p className="profile-empty">Ninguna muestra del recorrido tiene datos del DTM.</p>
 
   const pad = Math.max(2, (maxElevation - minElevation) * 0.08)
-  const y0 = minElevation - pad, y1 = maxElevation + pad
-  const sx = (d: number) => M.left + (d / totalDistance) * PW
+  const y0 = scale ? scale.y0 : minElevation - pad, y1 = scale ? scale.y1 : maxElevation + pad
+  const axisDistance = scale ? Math.max(scale.distance, totalDistance) : totalDistance
+  const sx = (d: number) => M.left + (d / axisDistance) * PW
   const sy = (z: number) => M.top + (1 - (z - y0) / (y1 - y0)) * PH
-  const useKm = totalDistance >= 2000
-  const xTicks = niceTicks(0, useKm ? totalDistance / 1000 : totalDistance, 4)
+  const useKm = axisDistance >= 2000
+  const xTicks = niceTicks(0, useKm ? axisDistance / 1000 : axisDistance, 4)
   const yTicks = niceTicks(y0, y1, 4)
   const paths = validRuns(samples).map((run) => run.map((s, i) => `${i ? 'L' : 'M'}${sx(s.distance).toFixed(1)},${sy(s.elevation as number).toFixed(1)}`).join(' '))
   const gaps = noDataRanges(samples)
 
   function onMove(event: PointerEvent<SVGSVGElement>) {
     const box = event.currentTarget.getBoundingClientRect()
-    const d = ((event.clientX - box.left) / box.width * W - M.left) / PW * totalDistance
+    const d = ((event.clientX - box.left) / box.width * W - M.left) / PW * axisDistance
     if (d < 0 || d > totalDistance) { setHover(null); return }
     let lo = 0, hi = samples.length - 1
     while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (samples[mid].distance < d) lo = mid; else hi = mid }
@@ -43,7 +48,7 @@ export function ProfileChart({ profile }: { profile: ProfileResult }) {
 
   const h = hover === null ? null : samples[hover]
   return <figure className="profile-chart">
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Perfil de elevación del DTM a lo largo de ${formatDistance(totalDistance)} horizontales; elevación entre ${minElevation.toFixed(1)} y ${maxElevation.toFixed(1)} m`} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${label ? `${label}: p` : 'P'}erfil de elevación del DTM a lo largo de ${formatDistance(totalDistance)} horizontales; elevación entre ${minElevation.toFixed(1)} y ${maxElevation.toFixed(1)} m`} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
       <defs><pattern id="nodata-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" className="hatch-line" /></pattern></defs>
       <rect x={M.left} y={M.top} width={PW} height={PH} className="plot-bg" />
       {gaps.map(([a, b]) => <rect key={`${a}-${b}`} x={sx(a)} y={M.top} width={Math.max(1, sx(b) - sx(a))} height={PH} fill="url(#nodata-hatch)" className="nodata-band"><title>Sin dato del DTM entre {formatDistance(a)} y {formatDistance(b)}</title></rect>)}
