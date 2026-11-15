@@ -7,6 +7,12 @@ import { WAYPOINT_LAYER_ID } from '../data/layers'
 import type { Layer, MapPoint, RasterLayerId, Selection } from '../data/types'
 import { isInterpolated, type Waypoint } from '../data/waypoints'
 import type { LonLat } from '../analysis/geodesy'
+import { nominalDiskPolygon, SECTOR_A_EXTENT } from '../analysis/context'
+
+// V1.1 · Contexto esquemático en el mapa: disco NOMINAL de Jezero (Gazetteer) y marco del Sector A (extensión CTX).
+const DISK = nominalDiskPolygon(180).map((p) => [p.lat, p.lon] as [number, number])
+const SECTOR_LATLNG = L.latLngBounds([SECTOR_A_EXTENT.south, SECTOR_A_EXTENT.west], [SECTOR_A_EXTENT.north, SECTOR_A_EXTENT.east])
+const CONTEXT_BOUNDS = L.latLngBounds(DISK).extend(SECTOR_LATLNG)
 
 type OpacityLayer = L.Layer & { setOpacity(opacity: number): unknown }
 type ProjImageOverlay = (url: string, bounds: L.Bounds, options?: L.ImageOverlayOptions) => OpacityLayer
@@ -24,6 +30,9 @@ type Props = {
   drawMode: boolean
   route: LonLat[]
   onAddVertex: (vertex: LonLat) => void
+  /** 'illustrative' dibuja el «Recorrido ilustrativo CANIS» con su propio estilo y rótulos de inicio y destino. */
+  routeVariant?: 'user' | 'illustrative'
+  routeEndLabels?: [string, string]
 }
 
 const crs = createMarsCrs()
@@ -31,7 +40,7 @@ const projImageOverlay = (L as unknown as { Proj: { imageOverlay: ProjImageOverl
 const projected = (b: ProjectedBounds) => L.bounds([b.west, b.south], [b.east, b.north])
 const geographic = (b: ProjectedBounds) => L.latLngBounds(crs.unproject(L.point(b.west, b.south)), crs.unproject(L.point(b.east, b.north)))
 
-export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, waypoints, elevationAt, onPointSelect, onCursorChange, drawMode, route, onAddVertex }: Props) {
+export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, waypoints, elevationAt, onPointSelect, onCursorChange, drawMode, route, onAddVertex, routeVariant = 'user', routeEndLabels }: Props) {
   const host = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
   const vectorGroup = useRef<L.LayerGroup | null>(null)
@@ -64,10 +73,21 @@ export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, wa
     map.createPane('waypoints').style.zIndex = '390'
     // Recorrido hipotético por encima de los waypoints; sin interacción para que los clics lleguen al mapa.
     map.createPane('route').style.zIndex = '395'
-    const sector = geographic(MARS_CRS_BOUNDS)
-    const fitSector = () => map.fitBounds(sector, { padding: [12, 12] })
+    // V1.1: contexto esquemático (por debajo de los waypoints). Solo líneas y rótulos; no imita imagen orbital.
+    map.createPane('context').style.zIndex = '380'
+    // V1.1: el encuadre inicial muestra Jezero (disco nominal) con el Sector A dentro: Marte → Jezero → Sector A.
+    const sector = geographic(MARS_CRS_BOUNDS).extend(CONTEXT_BOUNDS)
+    // Margen superior algo mayor para el rótulo del disco nominal, que se dibuja por encima de su borde norte.
+    const fitSector = () => map.fitBounds(sector, { paddingTopLeft: [12, 34], paddingBottomRight: [12, 12] })
     fitSector()
-    map.setMaxBounds(sector.pad(0.3))
+    map.setMaxBounds(sector.pad(0.25))
+    const context = L.layerGroup().addTo(map)
+    L.polygon(DISK, { pane: 'context', color: '#cfe3d8', weight: 1.5, opacity: 0.85, dashArray: '6 6', fill: false, interactive: false }).addTo(context)
+    L.rectangle(SECTOR_LATLNG, { pane: 'context', color: '#f5b86a', weight: 1.5, opacity: 0.95, fill: false, interactive: false }).addTo(context)
+    const label = (latlng: [number, number], html: string, cls: string) => L.marker(latlng, { pane: 'context', interactive: false, keyboard: false, icon: L.divIcon({ className: `context-label ${cls}`, html, iconSize: undefined }) }).addTo(context)
+    const north = DISK.reduce((a, b) => (b[0] > a[0] ? b : a))
+    label([north[0], north[1]], 'Jezero<br><em>disco nominal aprox. · no es el borde real</em>', 'disk')
+    label([SECTOR_A_EXTENT.south, SECTOR_A_EXTENT.west], 'Sector A · datos CTX de alta resolución', 'sector')
     // El contenedor puede cambiar de tamaño tras el primer render (maquetación, aviso cerrado, giro del móvil).
     const container = host.current
     const resizeObserver = new ResizeObserver(() => map.invalidateSize())
@@ -106,12 +126,14 @@ export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, wa
     const latlngs = route.map((v) => [v.lat, v.lon] as [number, number])
     // Línea recta en el CRS entre vértices: es exactamente el trazado que se muestrea para el perfil.
     L.polyline(latlngs, { pane: 'route', color: '#0b1512', weight: 6, opacity: 0.75, interactive: false }).addTo(group)
-    L.polyline(latlngs, { pane: 'route', color: '#ffffff', weight: 2.5, opacity: 1, interactive: false }).addTo(group)
+    const illustrative = routeVariant === 'illustrative'
+    L.polyline(latlngs, { pane: 'route', color: illustrative ? '#7fdcff' : '#ffffff', weight: illustrative ? 3 : 2.5, opacity: 1, dashArray: illustrative ? '10 6' : undefined, interactive: false }).addTo(group)
     route.forEach((v, i) => {
       const end = i === 0 || i === route.length - 1
-      L.circleMarker([v.lat, v.lon], { pane: 'route', radius: end ? 5 : 3.5, color: '#0b1512', weight: 1.5, fillColor: i === 0 ? '#9be37a' : '#ffffff', fillOpacity: 1, interactive: false }).addTo(group)
+      const marker = L.circleMarker([v.lat, v.lon], { pane: 'route', radius: end ? 5 : 3.5, color: '#0b1512', weight: 1.5, fillColor: i === 0 ? '#9be37a' : illustrative ? '#7fdcff' : '#ffffff', fillOpacity: 1, interactive: false }).addTo(group)
+      if (illustrative && end && routeEndLabels) marker.bindTooltip(routeEndLabels[i === 0 ? 0 : 1], { permanent: true, direction: i === 0 ? 'right' : 'left', className: 'route-end-label' })
     })
-  }, [route])
+  }, [route, routeVariant, routeEndLabels])
 
   useEffect(() => {
     if (!mapRef.current || !manifest || rasters.current.ctx_ortho) return

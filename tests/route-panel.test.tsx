@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { computeProfile } from '../src/analysis/profile'
-import { RoutePanel, ROUTE_NOTICE } from '../src/components/RoutePanel'
+import { ILLUSTRATIVE_NOTICE, ILLUSTRATIVE_TITLE, RoutePanel, ROUTE_NOTICE } from '../src/components/RoutePanel'
 
 const noop = () => undefined
 // Recorrido de 1 km en el ecuador; la segunda mitad queda sin dato.
@@ -47,10 +47,38 @@ describe('panel del perfil de recorrido', () => {
   })
 
   it('muestra los controles según el modo', () => {
-    expect(render({ mode: 'idle', profile: null, sensitivity: null, vertexCount: 0 })).toContain('Trazar recorrido')
+    // V1.1: el botón se llama «Trazar mi recorrido» y convive con el recorrido ilustrativo.
+    expect(render({ mode: 'idle', profile: null, sensitivity: null, vertexCount: 0 })).toContain('Trazar mi recorrido')
     const drawing = render({ mode: 'drawing', vertexCount: 1, profile: null, sensitivity: null })
     expect(drawing).toContain('Terminar')
     expect(drawing).toMatch(/<button[^>]*disabled[^>]*>Terminar/)
     expect(drawing).toContain('Borrar')
+  })
+})
+
+describe('recorrido ilustrativo CANIS (V1.1)', () => {
+  const info = { available: true, active: true, start: { rmc: '3_0', sol: 13 }, end: { rmc: '64_0', sol: 1354, elevGeoid: -1785.999 } }
+  const withIllustrative = (props: Partial<Parameters<typeof RoutePanel>[0]> = {}) => render({ illustrative: info, onShowIllustrative: noop, ...props })
+
+  it('ofrece «Ver recorrido ilustrativo CANIS» junto a «Trazar mi recorrido»', () => {
+    const html = withIllustrative({ mode: 'idle', profile: null, sensitivity: null, vertexCount: 0 })
+    expect(html).toContain('Ver recorrido ilustrativo CANIS')
+    expect(html).toContain('Trazar mi recorrido')
+  })
+
+  it('explica la regla de selección y que no es una ruta segura, óptima ni transitable', () => {
+    const html = withIllustrative()
+    expect(html).toContain(ILLUSTRATIVE_TITLE)
+    expect(html).toContain(ILLUSTRATIVE_NOTICE)
+    expect(html).toContain('Posición 3_0 de Perseverance (sol 13)')
+    expect(html).toContain('Posición no interpolada con mayor elevación publicada')
+    expect(html).toContain('64_0, sol 1354 (-1786.0 m)')
+    // Fuera de la negación explícita del aviso, ningún texto presenta el recorrido como propuesta, segura u óptima.
+    const text = html.replace(/<[^>]+>/g, ' ').replace(ILLUSTRATIVE_NOTICE, ' ').toLowerCase()
+    for (const forbidden of ['ruta propuesta', 'ruta recomendada', 'ruta segura', 'ruta óptima', 'es transitable']) expect(text).not.toContain(forbidden)
+  })
+
+  it('no muestra el bloque ilustrativo cuando el recorrido es del usuario', () => {
+    expect(withIllustrative({ illustrative: { ...info, active: false } })).not.toContain(ILLUSTRATIVE_NOTICE)
   })
 })

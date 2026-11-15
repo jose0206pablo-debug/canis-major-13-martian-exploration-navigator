@@ -7,7 +7,9 @@ import { InfoPanel } from './components/InfoPanel'
 import { LayerPanel } from './components/LayerPanel'
 import { Legend } from './components/Legend'
 import { MapView } from './components/MapView'
-import { RoutePanel, type GridStatus, type RouteMode } from './components/RoutePanel'
+import { RoutePanel, type GridStatus, type IllustrativeInfo, type RouteMode } from './components/RoutePanel'
+import { LocatorInset } from './components/LocatorInset'
+import { selectIllustrativeRoute } from './analysis/illustrative'
 import { toProjected, type LonLat } from './analysis/geodesy'
 import { computeProfile, PROFILE_SENSITIVITY_STEP_M, PROFILE_STEP_M } from './analysis/profile'
 import { loadElevationGrid, sampleBilinear, type ElevationGrid } from './data/elevation'
@@ -30,9 +32,10 @@ function App() {
   const [opacities, setOpacities] = useState<Record<string, number>>(() => Object.fromEntries(catalog.layers.map((layer) => [layer.id, layer.defaultOpacity])))
   const [selectedPoint, setSelectedPoint] = useState<Selection | null>(null)
   const [cursor, setCursor] = useState<MapPoint | null>(null)
-  const [disclaimerOpen, setDisclaimerOpen] = useState(true)
   const [routeMode, setRouteMode] = useState<RouteMode>('idle')
   const [route, setRoute] = useState<LonLat[]>([])
+  // V1.1: 'illustrative' cuando el recorrido mostrado es el «Recorrido ilustrativo CANIS».
+  const [routeKind, setRouteKind] = useState<'user' | 'illustrative'>('user')
 
   useEffect(() => {
     let cancelled = false
@@ -58,6 +61,14 @@ function App() {
   const elevationAt = useCallback((x: number, y: number) => (grid ? sampleBilinear(grid, x, y) : undefined), [grid])
   const gridStatus: GridStatus = grid ? 'ready' : gridError || dataStatus === 'missing' ? 'error' : 'loading'
   const addVertex = useCallback((vertex: LonLat) => setRoute((current) => [...current, vertex]), [])
+  const illustrativeRoute = useMemo(() => (waypoints ? selectIllustrativeRoute(waypoints) : null), [waypoints])
+  const illustrativeInfo: IllustrativeInfo = {
+    available: Boolean(illustrativeRoute),
+    active: routeKind === 'illustrative',
+    start: illustrativeRoute ? { rmc: illustrativeRoute.start.rmc, sol: illustrativeRoute.start.sol } : null,
+    end: illustrativeRoute ? { rmc: illustrativeRoute.end.rmc, sol: illustrativeRoute.end.sol, elevGeoid: illustrativeRoute.end.elevGeoid } : null,
+  }
+  const routeEndLabels = useMemo<[string, string] | undefined>(() => (illustrativeRoute ? [`Inicio · sol ${illustrativeRoute.start.sol}`, `Destino · sol ${illustrativeRoute.end.sol}`] : undefined), [illustrativeRoute])
   // Perfil con el intervalo principal (≤ 10 m) y, solo para mostrar la sensibilidad del desnivel, con 40 m.
   const profiles = useMemo(() => {
     if (!grid || route.length < 2) return { main: null, sensitivity: null }
@@ -74,16 +85,17 @@ function App() {
 
   return <main className="app-shell">
     <header className="topbar">
-      <div><p className="eyebrow">NASA Space Apps Challenge 2026 · Explorador educativo</p><h1>CANIS MAJOR 13 <span>· Jezero Sector A</span></h1></div>
+      <div><p className="eyebrow">NASA Space Apps Challenge 2026</p><h1>CANIS MAJOR 13 <span>· Martian Exploration Navigator</span></h1><p className="tagline">Explora el Sector A del cráter Jezero (Marte) con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance. Mira el recorrido ilustrativo CANIS o traza el tuyo y obtén su perfil de elevación.</p></div>
       <div className="status-summary" aria-label="Estado de los datos"><strong>Mapa 2D · IAU_2015:49910</strong><span>{status}</span></div>
     </header>
-    {disclaimerOpen && <DisclaimerBanner onDismiss={() => setDisclaimerOpen(false)} />}
+    <DisclaimerBanner />
     <section className="explorer-layout" aria-label="Explorador cartográfico de Jezero">
-      <aside className="left-panel panel"><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
-      <section className="map-column"><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} /><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
+      <aside className="left-panel panel"><LocatorInset variant="panel" /><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
+      <section className="map-column"><div className="map-stage"><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind} routeEndLabels={routeEndLabels} /><LocatorInset variant="map" /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
         <RoutePanel mode={routeMode} vertexCount={route.length} profile={profiles.main} sensitivity={profiles.sensitivity} gridStatus={gridStatus}
-          onStart={() => { setRoute([]); setRouteMode('drawing') }} onFinish={() => setRouteMode('done')} onClear={() => { setRoute([]); setRouteMode('idle') }} />
+          onStart={() => { setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={() => setRouteMode('done')} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
+          illustrative={illustrativeInfo} onShowIllustrative={() => { if (!illustrativeRoute) return; setRoute(illustrativeRoute.vertices); setRouteKind('illustrative'); setRouteMode('done') }} />
         <InfoPanel point={selectedPoint} onClear={() => setSelectedPoint(null)} />
       </aside>
     </section>

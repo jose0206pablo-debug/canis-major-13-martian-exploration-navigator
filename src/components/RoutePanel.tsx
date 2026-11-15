@@ -6,6 +6,14 @@ import { ProfileChart } from './ProfileChart'
 export type RouteMode = 'idle' | 'drawing' | 'done'
 export type GridStatus = 'loading' | 'ready' | 'error'
 
+/** Datos del «Recorrido ilustrativo CANIS» que muestra el panel (regla en `analysis/illustrative.ts`). */
+export interface IllustrativeInfo {
+  available: boolean
+  active: boolean
+  start: { rmc: string; sol: number } | null
+  end: { rmc: string; sol: number; elevGeoid: number } | null
+}
+
 type Props = {
   mode: RouteMode
   vertexCount: number
@@ -15,22 +23,37 @@ type Props = {
   onStart: () => void
   onFinish: () => void
   onClear: () => void
+  illustrative?: IllustrativeInfo
+  onShowIllustrative?: () => void
 }
 
 export const ROUTE_NOTICE = 'Recorrido hipotético para apoyo preliminar a la interpretación científica. No es navegación certificada y no evalúa seguridad, transitabilidad ni movilidad de astronautas.'
+export const ILLUSTRATIVE_TITLE = 'Recorrido ilustrativo CANIS'
+export const ILLUSTRATIVE_NOTICE = 'Línea recta entre dos posiciones documentadas seleccionadas mediante una regla reproducible. No representa una ruta segura, óptima ni transitable.'
 
 const elev = (v: number | null) => (v === null ? 'sin dato' : `${v.toFixed(1)} m`)
 
-export function RoutePanel({ mode, vertexCount, profile, sensitivity, gridStatus, onStart, onFinish, onClear }: Props) {
+export function RoutePanel({ mode, vertexCount, profile, sensitivity, gridStatus, onStart, onFinish, onClear, illustrative, onShowIllustrative }: Props) {
   const drawing = mode === 'drawing'
-  return <section className="route-panel" aria-label="Perfil de un recorrido hipotético">
-    <h2>Perfil de un recorrido hipotético</h2>
-    <p className="route-notice">{ROUTE_NOTICE}</p>
+  const showingIllustrative = Boolean(illustrative?.active && mode === 'done')
+  return <section className="route-panel" aria-label="Recorridos y perfil de elevación">
+    <h2>Recorridos y perfil de elevación</h2>
+    <p className="route-lead">Mira el recorrido ilustrativo de CANIS o traza el tuyo sobre el mapa: obtendrás su longitud, su desnivel y su perfil.</p>
     <div className="route-actions">
-      {mode === 'idle' && <button type="button" className="route-button primary" onClick={onStart} disabled={gridStatus !== 'ready'}>Trazar recorrido</button>}
+      {mode === 'idle' && onShowIllustrative && <button type="button" className="route-button primary" onClick={onShowIllustrative} disabled={gridStatus !== 'ready' || !illustrative?.available}>Ver recorrido ilustrativo CANIS</button>}
+      {mode === 'idle' && <button type="button" className={`route-button${onShowIllustrative ? '' : ' primary'}`} onClick={onStart} disabled={gridStatus !== 'ready'}>Trazar mi recorrido</button>}
       {drawing && <button type="button" className="route-button primary" onClick={onFinish} disabled={vertexCount < 2}>Terminar</button>}
       {mode !== 'idle' && <button type="button" className="route-button" onClick={onClear}>Borrar</button>}
     </div>
+    {showingIllustrative && illustrative?.start && illustrative.end && <div className="illustrative-box" role="note">
+      <h3>{ILLUSTRATIVE_TITLE}</h3>
+      <p className="illustrative-notice">{ILLUSTRATIVE_NOTICE}</p>
+      <dl>
+        <dt>Inicio</dt><dd>Posición {illustrative.start.rmc} de Perseverance (sol {illustrative.start.sol}), primera localización tras el aterrizaje</dd>
+        <dt>Destino</dt><dd>Posición no interpolada con mayor elevación publicada en el archivo de NASA/JPL: {illustrative.end.rmc}, sol {illustrative.end.sol} ({illustrative.end.elevGeoid.toFixed(1)} m)</dd>
+      </dl>
+    </div>}
+    <p className="route-notice">{ROUTE_NOTICE}</p>
     {gridStatus === 'loading' && <p className="route-hint">Cargando el DTM…</p>}
     {gridStatus === 'error' && <p className="route-hint">El DTM no está disponible: no se puede calcular el perfil.</p>}
     {drawing && <p className="route-hint" role="status">Modo trazado: haz clic en el mapa para añadir vértices ({vertexCount} {vertexCount === 1 ? 'vértice' : 'vértices'}). Pulsa «Terminar» con al menos dos.</p>}
