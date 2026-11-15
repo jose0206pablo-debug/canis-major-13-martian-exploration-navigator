@@ -187,12 +187,12 @@ export function PlanetaryEntry({ onEnterSector }: { onEnterSector: () => void })
   </div>
 }
 
-/** Contexto compacto dentro del mapa científico: sustituye al antiguo «¿Dónde estamos?». */
-export function ContextTrail({ onPlanetary, tech }: { onPlanetary: () => void; tech?: string }) {
-  return <nav className="context-trail" aria-label="Contexto">
+/** V1.5.1 · Barra contextual compacta sobre el mapa: recorrido + resumen de datos. El detalle (CRS, «datos
+ * científicos georreferenciados») vive en «Detalles del conjunto de datos», en el panel izquierdo. */
+export function ContextTrail({ onPlanetary, stats }: { onPlanetary: () => void; stats?: string }) {
+  return <nav className="context-trail" aria-label={SCIENCE_LABEL}>
     <ol><li>Marte</li><li>Jezero</li><li aria-current="location">Sector A</li></ol>
-    <p><strong>{SCIENCE_LABEL}</strong> · {SCIENCE_DETAIL}</p>
-    {tech && <p className="context-trail-tech">{tech}</p>}
+    {stats && <p className="context-trail-stats">{stats}</p>}
     <button type="button" className="context-trail-back" onClick={onPlanetary}>Vista planetaria</button>
   </nav>
 }

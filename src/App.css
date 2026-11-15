@@ -400,3 +400,68 @@ body.intro-open { overflow: hidden; }
 .map-column { border-color: var(--line-strong); box-shadow: 0 0 0 1px rgba(92, 200, 255, .05), 0 24px 70px rgba(0, 0, 0, .55); }
 @media (max-width: 860px) { .topbar.compact { flex-direction: column; align-items: flex-start; gap: 8px; } .topbar.compact .safeguard { max-width: none; width: 100%; } }
 @media (max-width: 720px) { .topbar.compact .brand-title { font-size: min(2.1rem, 9vw); } .brand-sub { font-size: .62rem; letter-spacing: .16em; } }
+
+/* ===== V1.5.1 · PASO 1: entrada directa, localizador compacto, proporciones y progressive disclosure ===== */
+/* Jerarquía de superficie: MAPA > panel derecho > panel izquierdo (≈ 15–16 % · 64–67 % · 18–20 % en escritorio). */
+@media (min-width: 1051px) {
+  .explorer-layout { grid-template-columns: minmax(188px, 15.5fr) minmax(420px, 65fr) minmax(235px, 19.5fr); gap: 10px; }
+}
+
+/* Cabecera: menos espacio y menos contenido simultáneo (sin fuentes diminutas). */
+.app-shell { padding: 10px 14px 14px; }
+.topbar.compact { margin-bottom: 6px; gap: 18px; }
+.topbar.compact .brand { gap: 2px; }
+.topbar.compact .safeguard { width: auto; max-width: none; margin: 0; padding: 4px 10px; font-size: .74rem; }
+.safeguard summary { white-space: nowrap; }
+.safeguard ul { max-width: 640px; }
+
+/* Barra contextual compacta sobre el mapa. */
+.context-trail { padding: 5px 10px; gap: 4px 12px; }
+.context-trail-stats { color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* Localizador planetario compacto (panel izquierdo). */
+.planet-locator { display: grid; grid-template-columns: 74px 1fr; gap: 2px 10px; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.planet-locator svg { display: block; width: 74px; height: 74px; }
+.ploc-grid { fill: none; stroke: rgba(255, 228, 210, .18); stroke-width: .7; }
+.ploc-limb { fill: none; stroke: rgba(255, 190, 150, .4); stroke-width: 1.2; }
+.ploc-jezero-ring { fill: none; stroke: #fff; stroke-width: 1.3; }
+.ploc-jezero-dot { fill: #fff; }
+.planet-locator-text { display: grid; gap: 3px; min-width: 0; }
+.ploc-trail { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 2px 4px; font-family: var(--font-display); font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); }
+.ploc-trail li { display: inline-flex; align-items: center; gap: 4px; }
+.ploc-trail li + li::before { content: "→"; color: var(--line-strong); }
+.ploc-trail li[aria-current] { color: var(--text); }
+.ploc-coords { margin: 0; color: var(--text-3); font-size: .66rem; line-height: 1.35; }
+.ploc-coords strong { display: block; color: var(--text-2); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ploc-scheme { margin: 0; color: var(--text-3); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }
+.ploc-open { justify-self: start; margin-top: 2px; padding: 2px 9px; border: 1px solid var(--line-strong); border-radius: 999px; background: transparent; color: var(--text-2); font-size: .66rem; cursor: pointer; }
+.ploc-open:hover { border-color: var(--accent); color: var(--text); }
+.ploc-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Capas: presentación inicial breve; lo técnico pasa a «Detalles» (sigue en el DOM). */
+.layer-item { padding: 8px 0; }
+.layer-header input { margin-top: 2px; }
+.layer-title { gap: 1px; }
+.layer-tag { color: var(--text-3); font-size: .68rem; font-variant-numeric: tabular-nums; }
+.layer-controls { margin-top: 4px; }
+.layer-details { margin-top: 4px; }
+.layer-details summary { cursor: pointer; width: max-content; color: var(--text-3); font-size: .66rem; letter-spacing: .04em; }
+.layer-details summary:hover, .layer-details summary:focus-visible { color: var(--accent); }
+.layer-details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer-details .layer-fullname { margin: 6px 0 2px; color: var(--text-2); font-size: .72rem; font-weight: 600; }
+.layer-details small { display: block; color: var(--text-3); font-size: .7rem; line-height: 1.35; }
+.layer-details .layer-badges { margin-top: 5px; }
+.layer-details p { margin: 6px 0 0; color: var(--text-3); font-size: .7rem; line-height: 1.35; }
+
+/* Detalles del conjunto de datos (reubica la frase técnica de la cabecera y el CRS de la barra contextual). */
+.panel-details { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.panel-details summary { cursor: pointer; color: var(--text-3); font-size: .68rem; letter-spacing: .04em; }
+.panel-details summary:hover, .panel-details summary:focus-visible { color: var(--accent); }
+.panel-details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.panel-details p { margin: 7px 0 0; color: var(--text-3); font-size: .7rem; line-height: 1.4; }
+.panel-details p strong { color: var(--accent-soft); font-weight: 600; }
+
+@media (max-width: 860px) {
+  .topbar.compact { gap: 6px; }
+  .safeguard summary { white-space: normal; }
+}

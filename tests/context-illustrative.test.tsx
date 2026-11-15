@@ -34,9 +34,10 @@ describe('salvaguarda (V1.1–V1.3)', () => {
   // V1.4: las pruebas del antiguo localizador pasan a tests/planetary-entry.test.tsx (entrada planetaria y contexto compacto).
   it('la salvaguarda es breve, visible y conserva los límites científicos', () => {
     const html = renderToStaticMarkup(<DisclaimerBanner />)
-    // V1.2: línea visible «Interpretación preliminar… · Ver límites científicos»; todo lo demás, en el desplegable.
-    expect(html).toMatch(new RegExp(`<summary>.*${SAFEGUARD_LEAD}.*${SAFEGUARD_NOT_CERTIFIED}.*${SAFEGUARD_LINK}.*</summary>`))
-    expect(SAFEGUARD_NOT_CERTIFIED).toBe('No es navegación certificada') // V1.3: visible sin desplegar (corrección de Codex)
+    // V1.5.1: línea visible mínima «No es navegación certificada · Límites»; todo lo demás, en el desplegable.
+    expect(html).toMatch(new RegExp(`<summary>.*${SAFEGUARD_NOT_CERTIFIED}.*${SAFEGUARD_LINK}.*</summary>`))
+    expect(SAFEGUARD_NOT_CERTIFIED).toBe('No es navegación certificada') // visible sin desplegar (corrección de Codex, V1.3)
+    expect(html).toContain(SAFEGUARD_LEAD) // sigue en el DOM, dentro del desplegable
     expect(html).toContain(SAFEGUARD_TEXT)
     for (const word of ['seguridad', 'habitabilidad', 'transitabilidad', 'movilidad de astronautas']) expect(SAFEGUARD_TEXT).toContain(word)
     expect(SAFEGUARD_TEXT).toContain('no es navegación certificada')

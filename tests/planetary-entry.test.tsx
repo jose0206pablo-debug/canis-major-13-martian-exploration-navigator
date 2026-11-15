@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { CONTEXT_LABEL, ContextTrail, PlanetaryEntry, SCIENCE_DETAIL, SCIENCE_LABEL } from '../src/components/PlanetaryEntry'
+import { JEZERO_CENTER_LABEL, JEZERO_CENTER_VALUE, LOCATOR_SCHEME_LABEL, PlanetaryLocator } from '../src/components/PlanetaryLocator'
 
 const noop = () => undefined
 // V1.4.1: un solo CTA; la etapa Jezero es solo una transición breve (sus elementos están en el DOM desde el inicio).
@@ -43,13 +44,25 @@ describe('entrada planetaria (V1.4 / V1.4.1)', () => {
     expect(x).toBeGreaterThan(50) // a la derecha del centro
   })
 
-  it('dentro del mapa, el contexto compacto distingue la ciencia georreferenciada y permite volver a la vista planetaria', () => {
-    const html = renderToStaticMarkup(<ContextTrail onPlanetary={noop} tech="Mapa 2D · IAU_2015:49910 · CTX 6 m · DTM 20 m" />)
-    expect(html).toContain('IAU_2015:49910') // V1.4.1: la información técnica se reubica aquí
+  it('V1.5.1: la barra contextual compacta resume recorrido y datos, y permite abrir la vista planetaria', () => {
+    const html = renderToStaticMarkup(<ContextTrail onPlanetary={noop} stats="CTX 6 m · DTM 20 m · 708 posiciones" />)
     for (const step of ['Marte', 'Jezero', 'Sector A']) expect(html).toContain(step)
-    expect(html).toContain(SCIENCE_LABEL)
+    expect(html).toContain('CTX 6 m · DTM 20 m · 708 posiciones')
+    expect(html).toContain(SCIENCE_LABEL) // como etiqueta accesible de la barra
     expect(SCIENCE_LABEL).toBe('Datos científicos georreferenciados')
-    expect(html).toContain(SCIENCE_DETAIL)
+    expect(SCIENCE_DETAIL).toBe('CTX + DTM + posiciones + escenarios') // se muestra en «Detalles del conjunto de datos»
     expect(html).toMatch(/<button[^>]*>Vista planetaria<\/button>/)
+  })
+
+  it('V1.5.1: el localizador compacto comunica Marte → Jezero → Sector A, el centro nominal y que es un esquema', () => {
+    const html = renderToStaticMarkup(<PlanetaryLocator onPlanetary={noop} />)
+    for (const step of ['Marte', 'Jezero', 'Sector A']) expect(html).toContain(`>${step}</li>`)
+    expect(html).toContain(LOCATOR_SCHEME_LABEL)
+    expect(LOCATOR_SCHEME_LABEL).toBe('Localizador esquemático')
+    expect(html).toContain(JEZERO_CENTER_LABEL)
+    expect(html).toContain(JEZERO_CENTER_VALUE)
+    expect(`${JEZERO_CENTER_LABEL}: ${JEZERO_CENTER_VALUE}`).toBe('Centro nominal de Jezero: 18,4° N · 77,7° E') // centro del Gazetteer, no del Sector A
+    expect(html).toMatch(/<button[^>]*>Vista planetaria<\/button>/)
+    expect(html).not.toMatch(/<image\b|<img\b/) // esquema: sin imagen rasterizada
   })
 })

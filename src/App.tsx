@@ -10,7 +10,8 @@ import { LayerPanel } from './components/LayerPanel'
 import { Legend } from './components/Legend'
 import { MapView } from './components/MapView'
 import { RoutePanel, type ComparisonData, type GridStatus, type IllustrativeInfo, type RouteMode } from './components/RoutePanel'
-import { ContextTrail, PlanetaryEntry, type EntryStage } from './components/PlanetaryEntry'
+import { ContextTrail, PlanetaryEntry, SCIENCE_DETAIL, SCIENCE_LABEL, type EntryStage } from './components/PlanetaryEntry'
+import { PlanetaryLocator } from './components/PlanetaryLocator'
 import { selectIllustrativeRoute } from './analysis/illustrative'
 import { compareScenarios, finishAlternative, sharedProfileScale, sharesEndpoints, startAlternative as startAlternativeRoute } from './analysis/compare'
 import { toProjected, type LonLat } from './analysis/geodesy'
@@ -50,9 +51,10 @@ function App() {
   // V1.1: 'illustrative' cuando el recorrido mostrado es el escenario A (referencia ilustrativa).
   // V1.3: 'alternative' cuando es la alternativa B, que comparte exactamente origen y destino con A.
   const [routeKind, setRouteKind] = useState<'user' | 'illustrative' | 'alternative'>('user')
-  // V1.4: entrada planetaria MARTE → JEZERO → SECTOR A. El explorador (y Leaflet) se monta SIEMPRE debajo, con su tamaño real;
-  // la entrada es una capa fija encima. «#mapa» o «#sector-a» en la URL entran directamente al mapa.
-  const [entryStage, setEntryStage] = useState<EntryStage>(() => (typeof window !== 'undefined' && /^#(mapa|sector-a)$/i.test(window.location.hash) ? 'done' : 'mars'))
+  // V1.5.1 (opción B): se entra DIRECTAMENTE al mapa científico; la vista planetaria queda como opción secundaria
+  // («Vista planetaria» en la barra contextual y en el localizador compacto), o con «#intro» en la URL.
+  // El explorador (y Leaflet) se monta SIEMPRE debajo, con su tamaño real; la entrada es una capa fija encima.
+  const [entryStage, setEntryStage] = useState<EntryStage>(() => (typeof window !== 'undefined' && window.location.hash.toLowerCase() === '#intro' ? 'mars' : 'done'))
   const introOpen = entryStage !== 'done'
   useEffect(() => { document.body.classList.toggle('intro-open', introOpen) }, [introOpen])
   // Al entrar: realce breve del mapa existente; no toca el zoom de Leaflet.
@@ -128,6 +130,7 @@ function App() {
   }
 
   const status = dataStatus === 'ready' ? 'CTX 6 m · DTM 20 m' : dataStatus === 'loading' ? 'Cargando datos CTX…' : 'Derivados CTX no generados'
+  const trailStats = dataStatus === 'ready' ? `CTX 6 m · DTM 20 m · ${waypoints?.length ?? 708} posiciones` : status
 
   const enterSector = () => {
     setEntryStage('done')
@@ -148,8 +151,8 @@ function App() {
       <DisclaimerBanner />
     </header>
     <section className="explorer-layout" aria-label="Explorador cartográfico de Jezero">
-      <aside className="left-panel panel"><p className="step-kicker layers-kicker">1 · Observar (CTX) · 2 · Comprender (DTM / relieve)</p><p className="panel-intro">Sector A del cráter Jezero con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /><SurfaceStationList stations={surfaceStations} onSelect={setSelectedSurface} disabled={routeMode === 'drawing'} /></aside>
-      <section className="map-column with-trail"><ContextTrail onPlanetary={() => setEntryStage('mars')} tech={`Mapa 2D · IAU_2015:49910 · ${status}`} /><div className="map-stage" ref={mapStageRef}><MapView surfaceStations={surfaceStations} onSurfaceSelect={setSelectedSurface} layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={(point) => { setSelectedSurface(null); setSelectedPoint(point) }} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
+      <aside className="left-panel panel"><PlanetaryLocator onPlanetary={() => setEntryStage('mars')} /><p className="step-kicker layers-kicker">1 · Observar · 2 · Comprender</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /><SurfaceStationList stations={surfaceStations} onSelect={setSelectedSurface} disabled={routeMode === 'drawing'} /><details className="panel-details"><summary>Detalles del conjunto de datos</summary><p><strong>{SCIENCE_LABEL}</strong> · {SCIENCE_DETAIL}.</p><p>Sector A del cráter Jezero con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p><p>Mapa 2D · CRS marciano IAU_2015:49910 (esfera de 3 396 190 m).</p></details></aside>
+      <section className="map-column with-trail"><ContextTrail onPlanetary={() => setEntryStage('mars')} stats={trailStats} /><div className="map-stage" ref={mapStageRef}><MapView surfaceStations={surfaceStations} onSurfaceSelect={setSelectedSurface} layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={(point) => { setSelectedSurface(null); setSelectedPoint(point) }} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
         {selectedSurface && <SurfaceObservation key={selectedSurface.rmc} station={selectedSurface} onClose={() => setSelectedSurface(null)} />}
         <RoutePanel mode={routeMode} vertexCount={route.length} profile={profiles.main} sensitivity={profiles.sensitivity} gridStatus={gridStatus}
