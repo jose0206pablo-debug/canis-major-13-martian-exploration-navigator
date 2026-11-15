@@ -54,15 +54,17 @@ describe('entrada planetaria (V1.4 / V1.4.1)', () => {
     expect(html).toMatch(/<button[^>]*>Vista planetaria<\/button>/)
   })
 
-  it('V1.5.1: el localizador compacto comunica Marte → Jezero → Sector A, el centro nominal y que es un esquema', () => {
+  it('V1.5.1c: el localizador muestra Marte real (MDIM 2.1 local), Jezero, el centro nominal y Sector A', () => {
     const html = renderToStaticMarkup(<PlanetaryLocator onPlanetary={noop} />)
-    for (const step of ['Marte', 'Jezero', 'Sector A']) expect(html).toContain(`>${step}</li>`)
-    expect(html).toContain(LOCATOR_SCHEME_LABEL)
-    expect(LOCATOR_SCHEME_LABEL).toBe('Localizador esquemático')
-    expect(html).toContain(JEZERO_CENTER_LABEL)
+    expect(html).toContain('Ubicación')
+    expect(html).toContain('Jezero')
+    expect(html).toContain('Sector A')
     expect(html).toContain(JEZERO_CENTER_VALUE)
-    expect(`${JEZERO_CENTER_LABEL}: ${JEZERO_CENTER_VALUE}`).toBe('Centro nominal de Jezero: 18,4° N · 77,7° E') // centro del Gazetteer, no del Sector A
-    expect(html).toMatch(/<button[^>]*>Vista planetaria<\/button>/)
-    expect(html).not.toMatch(/<image\b|<img\b/) // esquema: sin imagen rasterizada
+    expect(JEZERO_CENTER_VALUE).toBe('18.4° N · 77.7° E')
+    expect(html).toContain(JEZERO_CENTER_LABEL) // tooltip: centro nominal del Gazetteer, no el centro del Sector A
+    expect(html).toMatch(/<image\b[^>]*locator\/mars_mdim21_ortho\.webp/) // asset local; sin llamadas externas en ejecución
+    expect(html).toContain('MDIM 2.1') // crédito NASA/JPL/USGS presente
+    expect(html).toContain(LOCATOR_SCHEME_LABEL)
+    expect(html).toMatch(/<button[^>]*>Vista planetaria/)
   })
 })

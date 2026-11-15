@@ -183,3 +183,9 @@ SOFTWARE.
 Los cuatro WebP sin pérdida de public/surface/ son conversiones de imágenes de misión publicadas por NASA. Crédito Mastcam-Z: NASA/JPL-Caltech/ASU; crédito de la Navcam seleccionada para RMC 57_0: NASA/JPL-Caltech. No están cubiertos por la licencia MIT del código CANIS ni se declaran CC0. Uso educativo/informativo con atribución y sin implicar respaldo institucional, conforme a las políticas NASA y JPL y sin avisos restrictivos adicionales en las fichas examinadas el 2026-11-15. Identificadores, fuentes, límites espaciales y justificación: SURFACE_OBSERVATIONS.md.
 
 Políticas: https://www.nasa.gov/nasa-brand-center/images-and-media/ y https://www.jpl.nasa.gov/jpl-image-use-policy/ .
+
+## Locator globe (added 2026-11-15, V1.5.1c)
+
+| Resource | Use | Source and rights |
+|---|---|---|
+| Mars Viking MDIM 2.1 color mosaic (global, 232 m/px) | `public/locator/mars_mdim21_ortho.webp`: a LOCAL 560×560 orthographic render (lon_0 38°E, lat_0 12°N, sphere 3,396,190 m) used only as the compact locator's context globe; the application makes no runtime calls to Trek | Product: USGS Astrogeology Science Center, from NASA Viking Orbiter data; served by [NASA Mars Trek](https://trek.nasa.gov/mars/) WMTS (layer `Mars_Viking_MDIM21_ClrMosaic_global_232m`). USGS states its authored data/products are in the U.S. Public Domain and requests credit ([USGS copyrights and credits](https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits)). Credit: NASA/JPL/USGS. Reproducible generation (2026-11-15): `gdal_translate WMTS:<Trek WMTSCapabilities.xml> -outsize 1440 720` → `gdalwarp +proj=ortho +lon_0=38 +lat_0=12 +R=3396190 -ts 560 560 -dstalpha` → WEBP q88. It is a context illustration, not analysis data. |

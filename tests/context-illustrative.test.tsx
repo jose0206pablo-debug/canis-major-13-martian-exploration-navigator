@@ -6,7 +6,8 @@ import { JEZERO_NOMINAL, nominalDiskPolygon, SECTOR_A_EXTENT } from '../src/anal
 import { greatCircleDistance, toProjected } from '../src/analysis/geodesy'
 import { selectIllustrativeRoute } from '../src/analysis/illustrative'
 import { computeProfile } from '../src/analysis/profile'
-import { DisclaimerBanner, SAFEGUARD_LEAD, SAFEGUARD_LINK, SAFEGUARD_NOT_CERTIFIED, SAFEGUARD_TEXT } from '../src/components/DisclaimerBanner'
+import { DisclaimerBanner, ScopeContent } from '../src/components/DisclaimerBanner'
+import { SAFEGUARD_LEAD, SAFEGUARD_TEXT, SCOPE_BLOCKS, SCOPE_BUTTON, SCOPE_MORE } from '../src/data/safeguards'
 import { sampleBilinear, type ElevationGrid } from '../src/data/elevation'
 import { SCIENTIFIC_LIMITS } from '../src/data/safeguards'
 import { parseWaypoints, type Waypoint } from '../src/data/waypoints'
@@ -32,15 +33,19 @@ describe('disco nominal de Jezero (V1.1, A1e)', () => {
 
 describe('salvaguarda (V1.1–V1.3)', () => {
   // V1.4: las pruebas del antiguo localizador pasan a tests/planetary-entry.test.tsx (entrada planetaria y contexto compacto).
-  it('la salvaguarda es breve, visible y conserva los límites científicos', () => {
-    const html = renderToStaticMarkup(<DisclaimerBanner />)
-    // V1.5.1: línea visible mínima «No es navegación certificada · Límites»; todo lo demás, en el desplegable.
-    expect(html).toMatch(new RegExp(`<summary>.*${SAFEGUARD_NOT_CERTIFIED}.*${SAFEGUARD_LINK}.*</summary>`))
-    expect(SAFEGUARD_NOT_CERTIFIED).toBe('No es navegación certificada') // visible sin desplegar (corrección de Codex, V1.3)
-    expect(html).toContain(SAFEGUARD_LEAD) // sigue en el DOM, dentro del desplegable
+  it('V1.5.1c: indicador compacto de alcance y ficha con los cuatro bloques y toda la información científica', () => {
+    const header = renderToStaticMarkup(<DisclaimerBanner />)
+    expect(header).toContain(SCOPE_BUTTON)
+    expect(SCOPE_BUTTON).toBe('ANÁLISIS PRELIMINAR · Alcance y límites')
+    expect(header).toContain('aria-haspopup="dialog"')
+    const html = renderToStaticMarkup(<ScopeContent />)
+    expect(SCOPE_BLOCKS.map((b) => b.title)).toEqual(['Análisis topográfico preliminar', 'Escala de análisis', 'Registro y elevación', 'Cobertura y trazabilidad'])
+    for (const b of SCOPE_BLOCKS) { expect(html).toContain(b.title); expect(html).toContain(b.body) }
+    expect(html).toContain(SCOPE_MORE)
+    expect(html).toContain(SAFEGUARD_LEAD)
     expect(html).toContain(SAFEGUARD_TEXT)
     for (const word of ['seguridad', 'habitabilidad', 'transitabilidad', 'movilidad de astronautas']) expect(SAFEGUARD_TEXT).toContain(word)
-    expect(SAFEGUARD_TEXT).toContain('no es navegación certificada')
+    expect(SAFEGUARD_TEXT).toContain('no es navegación certificada') // la afirmación provisional no pasa a certificada
     for (const item of SCIENTIFIC_LIMITS) expect(html).toContain(item)
     expect(html).toContain('30–40 m')
     expect(html).toContain('revisión independiente pendiente')

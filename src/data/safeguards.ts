@@ -17,3 +17,17 @@ export const ILLUSTRATIVE_IS_NOT = [
   'No es óptimo: CANIS no busca ni calcula caminos.',
   'No certifica la transitabilidad del terreno.',
 ]
+
+/** V1.5.1c · Indicador de alcance científico (cabecera) y su ficha flotante. */
+export const SCOPE_BUTTON = 'ANÁLISIS PRELIMINAR · Alcance y límites'
+export const SCOPE_TITLE = 'Alcance científico y limitaciones'
+export const SCOPE_MORE = 'Ver metodología y limitaciones completas →'
+export const SCOPE_BLOCKS: readonly { title: string; body: string }[] = [
+  { title: 'Análisis topográfico preliminar', body: 'CANIS integra datos orbitales y posiciones históricas de Perseverance para explorar el relieve y comparar escenarios hipotéticos. No constituye navegación EVA operacional.' },
+  { title: 'Escala de análisis', body: 'CTX ~6 m/píxel · DTM ~20 m/píxel. Adecuado para análisis regional; no caracteriza obstáculos pequeños.' },
+  { title: 'Registro y elevación', body: 'Posible desplazamiento ~30–40 m entre imagen y relieve. Elevaciones compatibles con la referencia MOLA según la comprobación realizada; revisión independiente pendiente.' },
+  { title: 'Cobertura y trazabilidad', body: 'El análisis de alta resolución corresponde al Sector A. Las 708 posiciones de Perseverance son referencias históricas, no una trayectoria exacta para personas.' },
+]
+/** Texto íntegro de la salvaguarda (conservado completo en «metodología y limitaciones completas»). */
+export const SAFEGUARD_LEAD = 'Interpretación preliminar de datos orbitales'
+export const SAFEGUARD_TEXT = 'Herramienta basada en datos orbitales: no es navegación certificada y no evalúa seguridad, habitabilidad, transitabilidad ni movilidad de astronautas.'

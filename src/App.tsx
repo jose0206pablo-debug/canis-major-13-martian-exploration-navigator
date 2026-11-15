@@ -11,7 +11,8 @@ import { Legend } from './components/Legend'
 import { MapView } from './components/MapView'
 import { RoutePanel, type ComparisonData, type GridStatus, type IllustrativeInfo, type RouteMode } from './components/RoutePanel'
 import { ContextTrail, PlanetaryEntry, SCIENCE_DETAIL, SCIENCE_LABEL, type EntryStage } from './components/PlanetaryEntry'
-import { PlanetaryLocator } from './components/PlanetaryLocator'
+import { MARS_GLOBE_CREDIT, PlanetaryLocator } from './components/PlanetaryLocator'
+import { TopoLines } from './components/TopoLines'
 import { selectIllustrativeRoute } from './analysis/illustrative'
 import { compareScenarios, finishAlternative, sharedProfileScale, sharesEndpoints, startAlternative as startAlternativeRoute } from './analysis/compare'
 import { toProjected, type LonLat } from './analysis/geodesy'
@@ -144,6 +145,7 @@ function App() {
     {/* V1.4.1: cabecera de una sola franja. CANIS MAJOR 13 es el único bloque dominante; la salvaguarda va a la derecha;
         la información técnica pasa a la línea de contexto del mapa y la explicación de datos, al panel de capas. */}
     <header className="topbar compact">
+      <TopoLines />
       <div className="brand">
         <h1 className="brand-title">CANIS MAJOR <span className="brand-num">13</span></h1>
         <p className="brand-sub">Martian Exploration Navigator <span>· NASA Space Apps Challenge 2026</span></p>
@@ -151,7 +153,7 @@ function App() {
       <DisclaimerBanner />
     </header>
     <section className="explorer-layout" aria-label="Explorador cartográfico de Jezero">
-      <aside className="left-panel panel"><PlanetaryLocator onPlanetary={() => setEntryStage('mars')} /><p className="step-kicker layers-kicker">1 · Observar · 2 · Comprender</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /><SurfaceStationList stations={surfaceStations} onSelect={setSelectedSurface} disabled={routeMode === 'drawing'} /><details className="panel-details"><summary>Detalles del conjunto de datos</summary><p><strong>{SCIENCE_LABEL}</strong> · {SCIENCE_DETAIL}.</p><p>Sector A del cráter Jezero con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p><p>Mapa 2D · CRS marciano IAU_2015:49910 (esfera de 3 396 190 m).</p></details></aside>
+      <aside className="left-panel panel"><PlanetaryLocator onPlanetary={() => setEntryStage('mars')} /><p className="step-kicker layers-kicker">1 · Observar · 2 · Comprender</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /><SurfaceStationList stations={surfaceStations} onSelect={setSelectedSurface} disabled={routeMode === 'drawing'} /><details className="panel-details"><summary>Detalles del conjunto de datos</summary><p><strong>{SCIENCE_LABEL}</strong> · {SCIENCE_DETAIL}.</p><p>Sector A del cráter Jezero con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p><p>Mapa 2D · CRS marciano IAU_2015:49910 (esfera de 3 396 190 m).</p><p>{MARS_GLOBE_CREDIT}</p></details></aside>
       <section className="map-column with-trail"><ContextTrail onPlanetary={() => setEntryStage('mars')} stats={trailStats} /><div className="map-stage" ref={mapStageRef}><MapView surfaceStations={surfaceStations} onSurfaceSelect={setSelectedSurface} layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={(point) => { setSelectedSurface(null); setSelectedPoint(point) }} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
         {selectedSurface && <SurfaceObservation key={selectedSurface.rmc} station={selectedSurface} onClose={() => setSelectedSurface(null)} />}
