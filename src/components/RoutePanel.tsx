@@ -67,7 +67,9 @@ function ComparisonView({ data }: { data: ComparisonData }) {
   const noDataDelta = r.noData.b - r.noData.a
   const aPartial = r.noData.aDistance > 0, bPartial = r.noData.bDistance > 0
   return <section className="comparison" aria-label="Comparación de escenarios hipotéticos">
-    <h3>Comparación de los escenarios A y B</h3>
+    <p className="comparison-kicker">Mismo origen · mismo destino · distinto trazado</p>
+    <h3>¿Qué cambió? · Comparación de los escenarios A y B</h3>
+    <p className="comparison-sentence" role="status">{r.sentence}</p>
     <table className="comparison-table">
       <thead><tr><th scope="col">Métrica</th><th scope="col">A</th><th scope="col">B</th><th scope="col">Diferencia (B − A)</th></tr></thead>
       <tbody>
@@ -77,7 +79,6 @@ function ComparisonView({ data }: { data: ComparisonData }) {
         <tr><th scope="row">Sin datos del DTM</th><td>{r.noData.a.toFixed(1)} %</td><td>{r.noData.b.toFixed(1)} %</td><td>{noDataDelta === 0 ? 'igual' : signed(noDataDelta, `${Math.abs(noDataDelta).toFixed(1)} %`)}</td></tr>
       </tbody>
     </table>
-    <p className="comparison-sentence" role="status">{r.sentence}</p>
     {r.noDataAffects && <p className="route-notice">Hay tramos sin datos del DTM (A: {formatDistance(r.noData.aDistance)}; B: {formatDistance(r.noData.bDistance)}). Allí no se mide el relieve, así que el ascenso y el descenso no son comparables de forma completa. {PARTIAL_NOTE}</p>}
     <p className="comparison-method">Umbral para ascenso y descenso: ±{r.gain.tolerance.toFixed(1)} m y ±{r.loss.tolerance.toFixed(1)} m, el cambio observado al muestrear a 10 m y a {PROFILE_SENSITIVITY_STEP_M} m. Una diferencia menor o igual se indica así, sin interpretarla. {SAMPLING_NOTE}</p>
     <div className="comparison-charts">

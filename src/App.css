@@ -416,3 +416,59 @@
   .topo-lines { display: none; }
   .scope-button { align-self: flex-start; white-space: normal; text-align: left; line-height: 1.4; }
 }
+
+/* ===== V1.5.3 · Pasada final de jerarquía visual (sin cambios de estructura ni de lógica) =====
+   Semántica: NARANJA = identidad CANIS / atención / interacción especial · CIAN = datos científicos y estados técnicos
+   · BLANCO = información principal · GRIS FRÍO = explicación secundaria · AMARILLO = advertencia. */
+
+/* Cabecera: identidad algo más perceptible, sin competir con el título. */
+.topo-lines { left: min(240px, 20%); }
+.brand-title { text-shadow: 0 1px 18px rgba(0, 0, 0, .55); }
+
+/* Panel derecho: menos sensación administrativa — menos cajas, más tipografía y espacio. */
+.route-panel { gap: 12px; }
+.route-panel h2 { font-size: .86rem; }
+.compare-statement { padding: 2px 0 2px 10px; background: transparent; font-size: .78rem; }
+.route-lead { color: var(--text-3); font-size: .76rem; }
+.scenario-legend { gap: 6px; }
+.illustrative-box { border-color: rgba(127, 220, 255, .2); background: rgba(127, 220, 255, .035); }
+.route-notice { background: transparent; }
+.info-section { border-top-color: rgba(26, 36, 68, .7); }
+
+/* Acción principal = interacción especial CANIS (naranja); secundarias neutras. */
+.route-button { transition: border-color .15s, background .15s; }
+.route-button.primary { border-color: var(--mars); background: rgba(247, 103, 20, .14); color: #fff; }
+.route-button.primary:hover:not(:disabled) { border-color: #ff8a45; background: rgba(247, 103, 20, .24); }
+.route-button:hover:not(:disabled) { border-color: var(--text-3); }
+.route-button:focus-visible { outline-color: var(--mars); }
+
+/* Orden visual del panel: tras «Terminar en destino», el RESULTADO sube justo bajo las acciones. */
+.route-panel > .comparison { order: 1; }
+.route-panel > .scenario-legend, .route-panel > .illustrative-box, .route-panel > .route-notice { order: 2; }
+.route-panel > .info-section, .route-panel > .profile-chart { order: 3; }
+
+/* Resultado comparativo: mayor peso que los controles secundarios. */
+.comparison { gap: 10px; padding: 12px 0 2px; border-top: 1px solid rgba(247, 103, 20, .35); }
+.comparison-kicker { margin: 0; color: var(--mars); font-family: var(--font-display); font-size: .64rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+.comparison h3 { margin: 0; color: var(--text); font-family: var(--font-display); font-size: .9rem; font-weight: 700; letter-spacing: .02em; text-transform: none; }
+.comparison-sentence { padding: 9px 11px; border-left: 3px solid var(--mars); border-radius: 0 8px 8px 0; background: rgba(247, 103, 20, .07); color: #fff; font-size: .88rem; font-weight: 600; line-height: 1.45; }
+.comparison-table { font-size: .78rem; }
+.comparison-table th, .comparison-table td { padding: 6px 4px; border-bottom-color: rgba(26, 36, 68, .8); }
+.comparison-table tbody th { color: var(--text-3); font-weight: 500; }
+.comparison-table td { color: #fff; font-weight: 600; }
+.comparison-table td:last-child { color: var(--accent); font-weight: 700; }
+.chart-label { color: var(--text); }
+
+/* Valores científicos localizables de un vistazo; etiquetas en gris. */
+.route-metrics dd { color: #fff; font-size: .84rem; font-weight: 600; }
+.info-section dt { color: var(--text-3); }
+
+/* Observaciones de superficie: más descubribles (halo CANIS sutil), sin agrandar los marcadores ni tapar el mapa. */
+.leaflet-marker-icon.surface-marker { border: 1.5px solid rgba(247, 103, 20, .85); background: rgba(5, 7, 15, .9); color: #fff; box-shadow: 0 0 0 3px rgba(247, 103, 20, .16); transition: box-shadow .15s, border-color .15s; }
+.leaflet-marker-icon.surface-marker:hover, .leaflet-marker-icon.surface-marker:focus-visible { border-color: var(--mars); box-shadow: 0 0 0 5px rgba(247, 103, 20, .34), 0 0 14px rgba(247, 103, 20, .45); }
+.surface-observation h2 { color: #fff; }
+.surface-list summary { color: var(--text); font-weight: 600; }
+.surface-list summary::marker { color: var(--mars); }
+.context-trail-stats { color: var(--text-2); }
+
+@media (prefers-reduced-motion: reduce) { .route-button, .leaflet-marker-icon.surface-marker { transition: none; } }

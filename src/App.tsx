@@ -116,7 +116,7 @@ function App() {
   }
 
   const status = dataStatus === 'ready' ? 'CTX 6 m · DTM 20 m' : dataStatus === 'loading' ? 'Cargando datos CTX…' : 'Derivados CTX no generados'
-  const trailStats = dataStatus === 'ready' ? `CTX 6 m · DTM 20 m · ${waypoints?.length ?? 708} posiciones` : status
+  const trailStats = dataStatus === 'ready' ? `CTX 6 m · DTM 20 m · ${waypoints?.length ?? 708} posiciones${surfaceStations.length ? ` · ${surfaceStations.length} observaciones de superficie` : ''}` : status
 
 
   return <main className="app-shell">
