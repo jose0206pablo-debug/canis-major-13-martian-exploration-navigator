@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { SAFEGUARD_LEAD, SAFEGUARD_TEXT, SCIENTIFIC_LIMITS, SCOPE_BLOCKS, SCOPE_BUTTON, SCOPE_MORE, SCOPE_TITLE } from '../data/safeguards'
+import { SAFEGUARD_LEAD, SAFEGUARD_TEXT, SCIENTIFIC_LIMITS, SCOPE_BLOCKS, SCOPE_MORE, SCOPE_NOT_CERTIFIED, SCOPE_TITLE } from '../data/safeguards'
 
 /**
  * V1.5.1c · Indicador de alcance científico (cabecera, zona superior derecha) + ficha flotante.
- * - Indicador compacto: «ANÁLISIS PRELIMINAR · Alcance y límites ⓘ».
+ * - Indicador compacto y PERMANENTE: «⚠ ANÁLISIS PRELIMINAR · No es navegación certificada · Alcance y límites ⓘ»
+ *   (V1.5.2: la no certificación es legible siempre, sin hover ni popover — condición de auditoría).
  * - La ficha queda CONFINADA al ancho de la columna derecha: puede superponerse al panel derecho, nunca al mapa;
  *   no cambia la altura de la cabecera ni desplaza la composición (position: fixed, medida sobre `.right-panel`
  *   al abrirse y en cada redimensionado). Si el contenido no cabe, se desplaza por dentro.
@@ -61,7 +62,7 @@ export function DisclaimerBanner() {
 
   return <>
     <button ref={btn} type="button" className="scope-button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-      <span className="scope-warn" aria-hidden="true">⚠</span> {SCOPE_BUTTON} <span className="scope-info" aria-hidden="true">ⓘ</span>
+      <span className="scope-warn" aria-hidden="true">⚠</span> ANÁLISIS PRELIMINAR · <strong className="scope-cert">{SCOPE_NOT_CERTIFIED}</strong> · Alcance y límites <span className="scope-info" aria-hidden="true">ⓘ</span>
     </button>
     {open && box && <div ref={pop} tabIndex={-1} role="dialog" aria-label={SCOPE_TITLE} className="scope-popover" style={{ left: box.left, width: box.width, top: box.top, maxHeight: box.maxHeight }}>
       <div className="scope-head">

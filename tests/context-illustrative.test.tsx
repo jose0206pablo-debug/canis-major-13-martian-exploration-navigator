@@ -7,7 +7,7 @@ import { greatCircleDistance, toProjected } from '../src/analysis/geodesy'
 import { selectIllustrativeRoute } from '../src/analysis/illustrative'
 import { computeProfile } from '../src/analysis/profile'
 import { DisclaimerBanner, ScopeContent } from '../src/components/DisclaimerBanner'
-import { SAFEGUARD_LEAD, SAFEGUARD_TEXT, SCOPE_BLOCKS, SCOPE_BUTTON, SCOPE_MORE } from '../src/data/safeguards'
+import { SAFEGUARD_LEAD, SAFEGUARD_TEXT, SCOPE_BLOCKS, SCOPE_MORE, SCOPE_NOT_CERTIFIED } from '../src/data/safeguards'
 import { sampleBilinear, type ElevationGrid } from '../src/data/elevation'
 import { SCIENTIFIC_LIMITS } from '../src/data/safeguards'
 import { parseWaypoints, type Waypoint } from '../src/data/waypoints'
@@ -34,9 +34,15 @@ describe('disco nominal de Jezero (V1.1, A1e)', () => {
 describe('salvaguarda (V1.1–V1.3)', () => {
   // V1.4: las pruebas del antiguo localizador pasan a tests/planetary-entry.test.tsx (entrada planetaria y contexto compacto).
   it('V1.5.1c: indicador compacto de alcance y ficha con los cuatro bloques y toda la información científica', () => {
+    // V1.5.2 · Estado inicial (popover cerrado): SOLO el indicador está en el DOM, y la no certificación
+    // es visible permanentemente, sin hover, sin clic y sin abrir ningún desplegable.
     const header = renderToStaticMarkup(<DisclaimerBanner />)
-    expect(header).toContain(SCOPE_BUTTON)
-    expect(SCOPE_BUTTON).toBe('ANÁLISIS PRELIMINAR · Alcance y límites')
+    expect(header).toContain('ANÁLISIS PRELIMINAR')
+    expect(header).toContain(SCOPE_NOT_CERTIFIED)
+    expect(SCOPE_NOT_CERTIFIED).toBe('No es navegación certificada')
+    expect(header).toContain('Alcance y límites')
+    expect(header).not.toContain('scope-popover') // cerrado: el texto no depende del popover
+    expect(header).not.toContain('<details') // ni de ningún desplegable
     expect(header).toContain('aria-haspopup="dialog"')
     const html = renderToStaticMarkup(<ScopeContent />)
     expect(SCOPE_BLOCKS.map((b) => b.title)).toEqual(['Análisis topográfico preliminar', 'Escala de análisis', 'Registro y elevación', 'Cobertura y trazabilidad'])

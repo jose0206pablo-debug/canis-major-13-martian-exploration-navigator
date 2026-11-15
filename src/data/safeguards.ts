@@ -20,6 +20,8 @@ export const ILLUSTRATIVE_IS_NOT = [
 
 /** V1.5.1c · Indicador de alcance científico (cabecera) y su ficha flotante. */
 export const SCOPE_BUTTON = 'ANÁLISIS PRELIMINAR · Alcance y límites'
+/** V1.5.2 · Condición de auditoría: la no certificación debe ser visible SIN abrir el popover. */
+export const SCOPE_NOT_CERTIFIED = 'No es navegación certificada'
 export const SCOPE_TITLE = 'Alcance científico y limitaciones'
 export const SCOPE_MORE = 'Ver metodología y limitaciones completas →'
 export const SCOPE_BLOCKS: readonly { title: string; body: string }[] = [
