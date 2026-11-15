@@ -6,7 +6,7 @@ import { JEZERO_NOMINAL, nominalDiskPolygon, SECTOR_A_EXTENT } from '../src/anal
 import { greatCircleDistance, toProjected } from '../src/analysis/geodesy'
 import { selectIllustrativeRoute } from '../src/analysis/illustrative'
 import { computeProfile } from '../src/analysis/profile'
-import { DisclaimerBanner, SAFEGUARD_TEXT } from '../src/components/DisclaimerBanner'
+import { DisclaimerBanner, SAFEGUARD_LEAD, SAFEGUARD_LINK, SAFEGUARD_TEXT } from '../src/components/DisclaimerBanner'
 import { LocatorInset } from '../src/components/LocatorInset'
 import { sampleBilinear, type ElevationGrid } from '../src/data/elevation'
 import { SCIENTIFIC_LIMITS } from '../src/data/safeguards'
@@ -42,9 +42,30 @@ describe('localizador esquemático y salvaguarda (V1.1)', () => {
     expect(html).not.toMatch(/<image\b|<img\b/)
   })
 
+  it('V1.2: el globo se rotula como vista de contexto y esquema, y la narrativa llega hasta CTX/DTM', () => {
+    const html = renderToStaticMarkup(<LocatorInset onExplore={() => undefined} />)
+    expect(html).toContain('Marte · vista de contexto')
+    expect(html).toContain('Esquema de ubicación · no es imagen orbital')
+    for (const step of ['Marte', 'Jezero', 'Sector A', 'CTX/DTM']) expect(html).toContain(`<li>${step}</li>`)
+    expect(html).toContain('Explorar Sector A')
+    expect(html).not.toMatch(/<image\b|<img\b|<pattern\b|<filter\b/)
+    // Sin «Explorar» si no hay acción conectada
+    expect(renderToStaticMarkup(<LocatorInset />)).not.toContain('Explorar Sector A')
+  })
+
+  it('V1.2: los gradientes del globo no repiten identificador entre el panel y el mapa', () => {
+    const ids = (html: string) => [...html.matchAll(/id="([^"]+)"/g)].map((m) => m[1])
+    const panel = ids(renderToStaticMarkup(<LocatorInset variant="panel" />))
+    expect(panel.length).toBeGreaterThan(0)
+    expect(panel.every((id) => id.startsWith('mars-panel-'))).toBe(true)
+  })
+
   it('la salvaguarda es breve, visible y conserva los límites científicos', () => {
     const html = renderToStaticMarkup(<DisclaimerBanner />)
+    // V1.2: línea visible «Interpretación preliminar… · Ver límites científicos»; todo lo demás, en el desplegable.
+    expect(html).toMatch(new RegExp(`<summary>.*${SAFEGUARD_LEAD}.*${SAFEGUARD_LINK}.*</summary>`))
     expect(html).toContain(SAFEGUARD_TEXT)
+    for (const word of ['seguridad', 'habitabilidad', 'transitabilidad', 'movilidad de astronautas']) expect(SAFEGUARD_TEXT).toContain(word)
     expect(SAFEGUARD_TEXT).toContain('no es navegación certificada')
     for (const item of SCIENTIFIC_LIMITS) expect(html).toContain(item)
     expect(html).toContain('30–40 m')

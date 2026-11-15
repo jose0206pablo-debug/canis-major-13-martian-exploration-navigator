@@ -1,5 +1,40 @@
-:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #eff5f2; background: #07100f; font-synthesis: none; text-rendering: optimizeLegibility; }
+/*
+ * V1.2 · Tokens de identidad derivados del emblema oficial de CANIS MAJOR 13 (muestreo de color, 2026-11-15):
+ * fondo #000000 · espacio #05060a / #070c22 · blanco #f9f8fb · plata #f8fafc · «13» naranja #f76714 ·
+ * limbo de Marte #ffb786 · Marte profundo #3f1117 · vía láctea #9caffc.
+ * SOLO interfaz. Los colores de datos científicos (rampa del DTM, NoData, perfil, waypoints, capas del mapa) no se tocan.
+ */
+:root {
+  /* Espacio profundo (fondos y superficies) */
+  --space-0: #000000;
+  --space-1: #05070f;
+  --surface: #080d1f;
+  --surface-2: #0d1430;
+  --line: #1a2444;
+  --line-strong: #2b3a66;
+  /* Blanco / plata (texto) */
+  --text: #f4f6fb;
+  --text-2: #bfc6da;
+  --text-3: #8c95b0;
+  /* Identidad marciana: naranja del «13», con moderación */
+  --mars: #f76714;
+  --mars-limb: #ffb786;
+  --mars-deep: #3f1117;
+  /* Interacción: azul eléctrico / cian */
+  --accent: #5cc8ff;
+  --accent-soft: #9caffc;
+  /* Semántica */
+  --ok: #6fd39a;
+  --caution: #f2c14e;
+  /* Tipografía: Bahnschrift (incluida en Windows) para la marca; sin fuentes externas */
+  --font-display: Bahnschrift, "DIN Alternate", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  font-family: "Segoe UI Variable Text", "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  background: var(--space-0);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; min-height: 100vh; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--space-0); }
 button, input { font: inherit; }
 button { cursor: pointer; }

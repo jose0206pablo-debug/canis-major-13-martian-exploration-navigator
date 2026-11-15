@@ -1,7 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { computeProfile } from '../src/analysis/profile'
-import { ILLUSTRATIVE_NOTICE, ILLUSTRATIVE_TITLE, RoutePanel, ROUTE_NOTICE } from '../src/components/RoutePanel'
+import { ILLUSTRATIVE_IS_NOT } from '../src/data/safeguards'
+import { ILLUSTRATIVE_HEADING, ILLUSTRATIVE_NOTICE, ILLUSTRATIVE_READING, ILLUSTRATIVE_TITLE, RoutePanel, ROUTE_NOTICE } from '../src/components/RoutePanel'
 
 const noop = () => undefined
 // Recorrido de 1 km en el ecuador; la segunda mitad queda sin dato.
@@ -76,6 +77,19 @@ describe('recorrido ilustrativo CANIS (V1.1)', () => {
     // Fuera de la negación explícita del aviso, ningún texto presenta el recorrido como propuesta, segura u óptima.
     const text = html.replace(/<[^>]+>/g, ' ').replace(ILLUSTRATIVE_NOTICE, ' ').toLowerCase()
     for (const forbidden of ['ruta propuesta', 'ruta recomendada', 'ruta segura', 'ruta óptima', 'es transitable']) expect(text).not.toContain(forbidden)
+  })
+
+  it('V1.2: contextualiza el recorrido sin atribuir interés científico a la elección de los puntos', () => {
+    const html = withIllustrative()
+    expect(ILLUSTRATIVE_HEADING).toBe('Del suelo de Jezero hacia el borde occidental')
+    expect(ILLUSTRATIVE_NOTICE).toBe('Comparación topográfica sobre una línea recta ilustrativa entre dos posiciones históricas.')
+    expect(html).toContain(ILLUSTRATIVE_HEADING)
+    expect(html).toContain('Regla reproducible')
+    for (const item of ILLUSTRATIVE_IS_NOT) expect(html).toContain(item)
+    const text = html.replace(/<[^>]+>/g, ' ').toLowerCase()
+    for (const idea of ['trayecto real', 'no es seguro', 'no es óptimo', 'no certifica la transitabilidad']) expect(text).toContain(idea)
+    expect(html).toContain(ILLUSTRATIVE_READING)
+    for (const forbidden of ['interés científico', 'interes cientifico', 'por su interés', 'elegidos por canis']) expect(text).not.toContain(forbidden)
   })
 
   it('no muestra el bloque ilustrativo cuando el recorrido es del usuario', () => {

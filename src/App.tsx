@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { Attribution } from './components/Attribution'
 import { CoordinateBar } from './components/CoordinateBar'
@@ -36,6 +36,16 @@ function App() {
   const [route, setRoute] = useState<LonLat[]>([])
   // V1.1: 'illustrative' cuando el recorrido mostrado es el «Recorrido ilustrativo CANIS».
   const [routeKind, setRouteKind] = useState<'user' | 'illustrative'>('user')
+  // V1.2: «Explorar Sector A» solo dirige la atención al mapa existente (desplazamiento, foco y realce breve); no toca el zoom de Leaflet.
+  const mapStageRef = useRef<HTMLDivElement>(null)
+  const focusMap = useCallback(() => {
+    const stage = mapStageRef.current
+    if (!stage) return
+    stage.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    stage.querySelector<HTMLElement>('.leaflet-container')?.focus({ preventScroll: true })
+    stage.classList.remove('map-focus'); void stage.offsetWidth; stage.classList.add('map-focus')
+    window.setTimeout(() => stage.classList.remove('map-focus'), 1500)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -81,17 +91,24 @@ function App() {
     setVisibleLayerIds((current) => current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId])
   }
 
-  const status = dataStatus === 'ready' ? 'CTX D-004 (6 m) y D-001 (20 m)' : dataStatus === 'loading' ? 'Cargando datos CTX…' : 'Derivados CTX no generados'
+  const status = dataStatus === 'ready' ? 'CTX 6 m · DTM 20 m' : dataStatus === 'loading' ? 'Cargando datos CTX…' : 'Derivados CTX no generados'
 
   return <main className="app-shell">
     <header className="topbar">
-      <div><p className="eyebrow">NASA Space Apps Challenge 2026</p><h1>CANIS MAJOR 13 <span>· Martian Exploration Navigator</span></h1><p className="tagline">Explora el Sector A del cráter Jezero (Marte) con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance. Mira el recorrido ilustrativo CANIS o traza el tuyo y obtén su perfil de elevación.</p></div>
-      <div className="status-summary" aria-label="Estado de los datos"><strong>Mapa 2D · IAU_2015:49910</strong><span>{status}</span></div>
+      <div className="brand">
+        <h1 className="brand-title">CANIS MAJOR <span className="brand-num">13</span></h1>
+        <p className="brand-descriptor">Martian Exploration Navigator</p>
+        <p className="brand-event">NASA Space Apps Challenge 2026</p>
+      </div>
+      <div className="topbar-side">
+        <p className="tagline">Explora el Sector A del cráter Jezero (Marte) con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p>
+        <div className="status-summary" aria-label="Estado de los datos"><strong>Mapa 2D · IAU_2015:49910</strong><span>{status}</span></div>
+      </div>
     </header>
     <DisclaimerBanner />
     <section className="explorer-layout" aria-label="Explorador cartográfico de Jezero">
-      <aside className="left-panel panel"><LocatorInset variant="panel" /><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
-      <section className="map-column"><div className="map-stage"><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind} routeEndLabels={routeEndLabels} /><LocatorInset variant="map" /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
+      <aside className="left-panel panel"><LocatorInset variant="panel" onExplore={focusMap} /><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
+      <section className="map-column"><div className="map-stage" ref={mapStageRef}><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind} routeEndLabels={routeEndLabels} /><LocatorInset variant="map" onExplore={focusMap} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
         <RoutePanel mode={routeMode} vertexCount={route.length} profile={profiles.main} sensitivity={profiles.sensitivity} gridStatus={gridStatus}
           onStart={() => { setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={() => setRouteMode('done')} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
