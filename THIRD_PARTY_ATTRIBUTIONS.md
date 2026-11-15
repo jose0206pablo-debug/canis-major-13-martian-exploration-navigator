@@ -176,3 +176,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+
+## Observaciones de superficie Perseverance — módulo V1.5
+
+Los cuatro WebP sin pérdida de public/surface/ son conversiones de imágenes de misión publicadas por NASA. Crédito Mastcam-Z: NASA/JPL-Caltech/ASU; crédito de la Navcam seleccionada para RMC 57_0: NASA/JPL-Caltech. No están cubiertos por la licencia MIT del código CANIS ni se declaran CC0. Uso educativo/informativo con atribución y sin implicar respaldo institucional, conforme a las políticas NASA y JPL y sin avisos restrictivos adicionales en las fichas examinadas el 2026-11-15. Identificadores, fuentes, límites espaciales y justificación: SURFACE_OBSERVATIONS.md.
+
+Políticas: https://www.nasa.gov/nasa-brand-center/images-and-media/ y https://www.jpl.nasa.gov/jpl-image-use-policy/ .

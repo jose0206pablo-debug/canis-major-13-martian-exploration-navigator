@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
+import { SurfaceObservation, SurfaceStationList } from './surface/SurfaceObservation'
+import { locateSurfaceStations, type LocatedSurfaceStation } from './surface/stations'
 import { Attribution } from './components/Attribution'
 import { CoordinateBar } from './components/CoordinateBar'
 import { DisclaimerBanner } from './components/DisclaimerBanner'
@@ -39,6 +41,8 @@ function App() {
   const [waypoints, setWaypoints] = useState<Waypoint[] | null>(null)
   const [visibleLayerIds, setVisibleLayerIds] = useState<string[]>(() => catalog.layers.filter((layer) => layer.visibleDefault).map((layer) => layer.id))
   const [opacities, setOpacities] = useState<Record<string, number>>(() => Object.fromEntries(catalog.layers.map((layer) => [layer.id, layer.defaultOpacity])))
+  const [selectedSurface, setSelectedSurface] = useState<LocatedSurfaceStation | null>(null)
+  const surfaceStations = useMemo(() => locateSurfaceStations(waypoints ?? []), [waypoints])
   const [selectedPoint, setSelectedPoint] = useState<Selection | null>(null)
   const [cursor, setCursor] = useState<MapPoint | null>(null)
   const [routeMode, setRouteMode] = useState<RouteMode>('idle')
@@ -107,6 +111,7 @@ function App() {
   }, [comparingAlternative, routeMode, profiles, profilesA, referenceRoute, route])
   const referenceEndLabels = useMemo<[string, string] | undefined>(() => (illustrativeRoute ? [`Origen común · sol ${illustrativeRoute.start.sol}`, `Destino común · sol ${illustrativeRoute.end.sol}`] : undefined), [illustrativeRoute])
   function startAlternative() {
+    setSelectedSurface(null)
     if (!illustrativeRoute) return
     setRoute(startAlternativeRoute(illustrativeRoute.vertices[0])); setRouteKind('alternative'); setRouteMode('drawing')
   }
@@ -143,14 +148,15 @@ function App() {
       <DisclaimerBanner />
     </header>
     <section className="explorer-layout" aria-label="Explorador cartográfico de Jezero">
-      <aside className="left-panel panel"><p className="step-kicker layers-kicker">1 · Observar (CTX) · 2 · Comprender (DTM / relieve)</p><p className="panel-intro">Sector A del cráter Jezero con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /></aside>
-      <section className="map-column with-trail"><ContextTrail onPlanetary={() => setEntryStage('mars')} tech={`Mapa 2D · IAU_2015:49910 · ${status}`} /><div className="map-stage" ref={mapStageRef}><MapView layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={setSelectedPoint} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
+      <aside className="left-panel panel"><p className="step-kicker layers-kicker">1 · Observar (CTX) · 2 · Comprender (DTM / relieve)</p><p className="panel-intro">Sector A del cráter Jezero con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /><SurfaceStationList stations={surfaceStations} onSelect={setSelectedSurface} disabled={routeMode === 'drawing'} /></aside>
+      <section className="map-column with-trail"><ContextTrail onPlanetary={() => setEntryStage('mars')} tech={`Mapa 2D · IAU_2015:49910 · ${status}`} /><div className="map-stage" ref={mapStageRef}><MapView surfaceStations={surfaceStations} onSurfaceSelect={setSelectedSurface} layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={(point) => { setSelectedSurface(null); setSelectedPoint(point) }} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
+        {selectedSurface && <SurfaceObservation key={selectedSurface.rmc} station={selectedSurface} onClose={() => setSelectedSurface(null)} />}
         <RoutePanel mode={routeMode} vertexCount={route.length} profile={profiles.main} sensitivity={profiles.sensitivity} gridStatus={gridStatus}
-          onStart={() => { setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={finishRoute} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
-          illustrative={illustrativeInfo} onShowIllustrative={() => { if (!illustrativeRoute) return; setRoute(illustrativeRoute.vertices); setRouteKind('illustrative'); setRouteMode('done') }}
+          onStart={() => { setSelectedSurface(null); setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={finishRoute} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
+          illustrative={illustrativeInfo} onShowIllustrative={() => { if (!illustrativeRoute) return; setSelectedSurface(null); setRoute(illustrativeRoute.vertices); setRouteKind('illustrative'); setRouteMode('done') }}
           alternativeActive={routeKind === 'alternative'} onStartAlternative={startAlternative} onUndo={() => setRoute((current) => (current.length > 1 ? current.slice(0, -1) : current))} comparison={comparison} />
-        <InfoPanel point={selectedPoint} onClear={() => setSelectedPoint(null)} />
+        <InfoPanel point={selectedSurface ? null : selectedPoint} onClear={() => setSelectedPoint(null)} />
       </aside>
     </section>
   </main>

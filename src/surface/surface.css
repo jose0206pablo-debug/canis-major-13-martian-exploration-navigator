@@ -1,0 +1,20 @@
+.surface-marker { display: grid; place-items: center; border: 1px solid #9aaebe; border-radius: 50%; background: #182735e8; color: #d9e4ec; }
+.surface-marker svg { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.surface-marker:focus-visible, .surface-list button:focus-visible, .surface-close:focus-visible { outline: 3px solid #ffb078; outline-offset: 3px; }
+.surface-observation { border-bottom: 1px solid var(--line, #547080); padding: 0 0 16px; margin-bottom: 16px; overflow-wrap: anywhere; }
+.surface-observation figure { margin: 12px 0; }
+.surface-observation img { display: block; width: 100%; height: auto; }
+.surface-observation figcaption { margin-top: 6px; font-size: .8rem; }
+.surface-observation p, .surface-list p { font-size: .85rem; line-height: 1.5; }
+.surface-association { border-left: 2px solid #ffb078; padding-left: 9px; }
+.surface-observation details { margin-top: 12px; }
+.surface-observation a { color: var(--accent, #a4dcff); text-decoration: underline; }
+.surface-observation dt { font-weight: 600; margin-top: 8px; }
+.surface-observation dd { margin: 0; font-size: .8rem; }
+.surface-close, .surface-list button { font: inherit; color: inherit; background: transparent; border: 1px solid var(--line, #547080); border-radius: 5px; padding: 8px; cursor: pointer; }
+.surface-list { margin-top: 16px; }
+.surface-list summary { cursor: pointer; }
+.surface-list ul { padding: 0; list-style: none; display: grid; gap: 8px; }
+.surface-list button { text-align: left; width: 100%; font-size: .82rem; }
+
+.surface-list button:disabled { opacity: .5; cursor: default; }

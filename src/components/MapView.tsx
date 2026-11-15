@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { addSurfaceMarkers } from '../surface/markers'
+import type { LocatedSurfaceStation } from '../surface/stations'
 import L from 'leaflet'
 import { MARS_CRS_BOUNDS, MARS_CRS_RESOLUTIONS, ORTHO_NATIVE_ZOOM } from '../data/mars-crs'
 import { createMarsCrs } from '../data/mars-leaflet-crs'
@@ -12,6 +14,8 @@ import type { LonLat } from '../analysis/geodesy'
 type OpacityLayer = L.Layer & { setOpacity(opacity: number): unknown }
 type ProjImageOverlay = (url: string, bounds: L.Bounds, options?: L.ImageOverlayOptions) => OpacityLayer
 type Props = {
+  surfaceStations?: LocatedSurfaceStation[]
+  onSurfaceSelect?: (station: LocatedSurfaceStation) => void
   layers: Layer[]
   pois: import('../data/types').PointOfInterest[]
   visibleLayerIds: string[]
@@ -52,7 +56,7 @@ function drawRoute(group: L.LayerGroup, route: LonLat[], variant: 'user' | 'illu
   })
 }
 
-export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, waypoints, elevationAt, onPointSelect, onCursorChange, drawMode, route, onAddVertex, routeVariant = 'user', routeEndLabels, referenceRoute, referenceEndLabels }: Props) {
+export function MapView({ surfaceStations, onSurfaceSelect, layers, pois, visibleLayerIds, opacities, manifest, waypoints, elevationAt, onPointSelect, onCursorChange, drawMode, route, onAddVertex, routeVariant = 'user', routeEndLabels, referenceRoute, referenceEndLabels }: Props) {
   const host = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
   const vectorGroup = useRef<L.LayerGroup | null>(null)
@@ -207,6 +211,14 @@ export function MapView({ layers, pois, visibleLayerIds, opacities, manifest, wa
       }).addTo(group)
     })
   }, [pois, visibleLayerIds, opacities])
+
+  // Capa contextual independiente. No participa en límites, encuadre o cálculo; se retira mientras hay un trazado o escenario activo.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || drawMode || route.length > 0 || !surfaceStations?.length || !onSurfaceSelect) return
+    const group = addSurfaceMarkers(map, surfaceStations, onSurfaceSelect)
+    return () => { group.remove() }
+  }, [surfaceStations, onSurfaceSelect, drawMode, route.length])
 
   return <div className="map" ref={host} role="application" aria-label="Mapa de Jezero Sector A en el CRS marciano IAU_2015:49910" />
 }
