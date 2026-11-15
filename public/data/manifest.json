@@ -1,0 +1,314 @@
+{
+ "generated_at": "2026-11-14T16:01:13-05:00",
+ "generator": "05_PROTOTIPO/procesamiento/generar_derivados.py",
+ "gdal_version": "3.13.3",
+ "crs": {
+  "name": "IAU_2015:49910",
+  "proj4": "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs",
+  "origin": [
+   4573663.250853,
+   1109693.140188
+  ],
+  "ortho_native_zoom": 5,
+  "resolutions_m": [
+   192,
+   96,
+   48,
+   24,
+   12,
+   6
+  ]
+ },
+ "sources": {
+  "D-001": {
+   "file": "JEZ_ctx_B_soc_008_DTM_MOLAtopography_DeltaGeoid_20m_Eqc_latTs0_lon0.tif",
+   "sha256": "16A1AA66C3F48C1BCA252795827DB7B417876217AFF0F5E1AFF18027FAB2327B",
+   "url": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/JEZ_ctx_B_soc_008_DTM_MOLAtopography_DeltaGeoid_20m_Eqc_latTs0_lon0.tif",
+   "sha256_before": "16A1AA66C3F48C1BCA252795827DB7B417876217AFF0F5E1AFF18027FAB2327B",
+   "sha256_after": "16A1AA66C3F48C1BCA252795827DB7B417876217AFF0F5E1AFF18027FAB2327B",
+   "unchanged": true,
+   "width": 1596,
+   "height": 1512,
+   "geotransform": [
+    4573663.250853,
+    20.0,
+    0.0,
+    1109693.140188,
+    0.0,
+    -20.0
+   ],
+   "bounds_m": {
+    "west": 4573663.250853,
+    "north": 1109693.140188,
+    "east": 4605583.250853,
+    "south": 1079453.140188
+   },
+   "data_type": "Float32",
+   "nodata": -3.4028226550889045e+38,
+   "proj4": "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs"
+  },
+  "D-004": {
+   "file": "JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0.tif",
+   "sha256": "842B457AFEE7C2672022B66E3F60BE836C6D52E99474015BFD9CED60099B8615",
+   "url": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0.tif",
+   "sha256_before": "842B457AFEE7C2672022B66E3F60BE836C6D52E99474015BFD9CED60099B8615",
+   "sha256_after": "842B457AFEE7C2672022B66E3F60BE836C6D52E99474015BFD9CED60099B8615",
+   "unchanged": true,
+   "width": 5322,
+   "height": 5040,
+   "geotransform": [
+    4573663.250853,
+    6.0,
+    0.0,
+    1109693.140188,
+    0.0,
+    -6.0
+   ],
+   "bounds_m": {
+    "west": 4573663.250853,
+    "north": 1109693.140188,
+    "east": 4605595.250853,
+    "south": 1079453.140188
+   },
+   "data_type": "Byte",
+   "nodata": 0.0,
+   "proj4": "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs"
+  },
+  "D-005": {
+   "file": "M20_waypoints.json",
+   "sha256": "BD143EE69241229926ABD373E6305B8BBB326D6B5A7B4A8D6935262696F93DC4",
+   "url": "https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_waypoints.json",
+   "bytes": 603126,
+   "sha256_before": "BD143EE69241229926ABD373E6305B8BBB326D6B5A7B4A8D6935262696F93DC4",
+   "sha256_after": "BD143EE69241229926ABD373E6305B8BBB326D6B5A7B4A8D6935262696F93DC4",
+   "unchanged": true
+  }
+ },
+ "layers": {
+  "ctx_ortho": {
+   "source": "D-004",
+   "kind": "tiles",
+   "url": "tiles/ctx_ortho/{z}/{x}/{y}.png",
+   "tile_size": 256,
+   "min_zoom": 0,
+   "max_native_zoom": 5,
+   "bounds_m": {
+    "west": 4573663.250853,
+    "north": 1109693.140188,
+    "east": 4605595.250853,
+    "south": 1079453.140188
+   },
+   "method": "gdal2tiles --profile=raster --xyz -r average --zoom=0-5 (PNG gris + alfa)",
+   "tiles": 574,
+   "bytes": 18648506,
+   "verification": {
+    "tile_counts": {
+     "0": 1,
+     "1": 4,
+     "2": 9,
+     "3": 30,
+     "4": 110,
+     "5": 420
+    },
+    "z5_grid": [
+     21,
+     20
+    ],
+    "z5_tile_0_0_identical_to_source": true,
+    "z5_last_tile_valid_px": [
+     202,
+     176
+    ],
+    "z5_last_tile_content_identical": true,
+    "z5_last_tile_alpha_edges": true,
+    "z0_valid_px": [
+     167,
+     158
+    ],
+    "z0_expected_px": [
+     166.3125,
+     157.5
+    ]
+   }
+  },
+  "ctx_dtm_relief": {
+   "source": "D-001",
+   "kind": "image",
+   "url": "dtm/dtm_color_relief.png",
+   "bounds_m": {
+    "west": 4573663.250853,
+    "north": 1109693.140188,
+    "east": 4605583.250853,
+    "south": 1079453.140188
+   },
+   "method": "gdaldem color-relief -alpha con paleta_elevacion.txt (viridis lineal entre mín. y máx. exactos)",
+   "palette": [
+    {
+     "value": -2710.696,
+     "color": "#440154"
+    },
+    {
+     "value": -2561.301,
+     "color": "#472d7b"
+    },
+    {
+     "value": -2411.907,
+     "color": "#3b528b"
+    },
+    {
+     "value": -2262.512,
+     "color": "#2c728e"
+    },
+    {
+     "value": -2113.118,
+     "color": "#21918c"
+    },
+    {
+     "value": -1963.723,
+     "color": "#28ae80"
+    },
+    {
+     "value": -1814.329,
+     "color": "#5ec962"
+    },
+    {
+     "value": -1664.934,
+     "color": "#addc30"
+    },
+    {
+     "value": -1515.54,
+     "color": "#fde725"
+    }
+   ]
+  },
+  "ctx_dtm_hillshade": {
+   "source": "D-001",
+   "kind": "image",
+   "url": "dtm/dtm_hillshade.png",
+   "bounds_m": {
+    "west": 4573663.250853,
+    "north": 1109693.140188,
+    "east": 4605583.250853,
+    "south": 1079453.140188
+   },
+   "method": "gdaldem hillshade -compute_edges azimut 315.0° altitud 45.0° z 1.0",
+   "note": "Sombreado sintético solo visual. Usa 20 m en x (metros proyectados); la separación real E-O en Jezero es ~18,97 m"
+  }
+ },
+ "elevation": {
+  "source": "D-001",
+  "url": "dtm/dtm_20m_f32le.bin",
+  "dtype": "float32-le",
+  "order": "filas de norte a sur, columnas de oeste a este",
+  "width": 1596,
+  "height": 1512,
+  "geotransform": [
+   4573663.250853,
+   20.0,
+   0.0,
+   1109693.140188,
+   0.0,
+   -20.0
+  ],
+  "nodata": -3.4028226550889045e+38,
+  "nodata_pixels": 0,
+  "min_m": -2710.69580078125,
+  "max_m": -1515.53955078125,
+  "vertical_reference": "Elevación respecto a un areoide compatible con MOLA (GMM3). Modelo exacto y exactitud absoluta no documentados",
+  "controls": [
+   {
+    "col": 860,
+    "row": 819,
+    "expected": -2567.19165039062,
+    "value": -2567.191650390625,
+    "ok": true
+   },
+   {
+    "col": 864,
+    "row": 749,
+    "expected": -2561.537109375,
+    "value": -2561.537109375,
+    "ok": true
+   }
+  ]
+ },
+ "waypoints": {
+  "source": "D-005",
+  "source_sha256": "BD143EE69241229926ABD373E6305B8BBB326D6B5A7B4A8D6935262696F93DC4",
+  "url": "waypoints/m20_waypoints.geojson",
+  "source_url": "https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_waypoints.json",
+  "fields": [
+   "RMC",
+   "site",
+   "drive",
+   "sol",
+   "elev_geoid",
+   "dist_total_m",
+   "final",
+   "Note"
+  ],
+  "coordinates": "lon/lat planetocéntricas (°E), geometría = propiedades lon/lat",
+  "elev_geoid_note": "Altura publicada por MMGIS; contrastada con el DTM D-001 (ver verification)",
+  "method": "Copia reducida del GeoJSON oficial, ordenada por sol/site/drive; sin easting/northing (paralelo estándar 18,4663°, D-04)",
+  "verification": {
+   "count": 708,
+   "inside_dtm": 708,
+   "sol_range": [
+    13,
+    2022
+   ],
+   "localization_types": {
+    "Site increment, no motion.": 1,
+    "First localization!": 1,
+    "End-of-drive localization": 552,
+    "Mid-drive localization": 132,
+    "Interpolated": 22
+   },
+   "source_sha256": "BD143EE69241229926ABD373E6305B8BBB326D6B5A7B4A8D6935262696F93DC4",
+   "dtm_minus_elev_geoid_m": {
+    "median": -1.0638110121126374,
+    "mean": -0.8910564235215921,
+    "std": 3.246795122449461,
+    "min": -11.72412413492998,
+    "max": 7.938010875905775,
+    "abs_le_10m": 704
+   }
+  },
+  "derived_sha256": "090BBE266A7D51244CAEEBD1650E47FB0585022EF7F0477654F0ED1301CE1604"
+ },
+ "derived_files": {
+  "dtm/dtm_20m_f32le.bin": {
+   "bytes": 9652608,
+   "sha256": "95E0F863C03C7BFD27D5A9E1A1592770E0E94DE6B3E807D03E79C23D01F359FA",
+   "derived_from": "D-001"
+  },
+  "dtm/dtm_color_relief.png": {
+   "bytes": 897237,
+   "sha256": "865A5449B55E6652BD3BD270AE92BAA679259E3E5E44AE66A367751E67F6A6E1",
+   "derived_from": "D-001"
+  },
+  "dtm/dtm_hillshade.png": {
+   "bytes": 858015,
+   "sha256": "53DD5357FF70D300AC395297E58A4DD524E7A692EF20DA07E2F90DC02FAB50CD",
+   "derived_from": "D-001"
+  },
+  "dtm/paleta_elevacion.txt": {
+   "bytes": 239,
+   "sha256": "BD9D95AD143541BE17A91A1309E154C49C91D387997809FEDC5C6897BC1D7429",
+   "derived_from": "D-001"
+  },
+  "waypoints/m20_waypoints.geojson": {
+   "bytes": 190840,
+   "sha256": "090BBE266A7D51244CAEEBD1650E47FB0585022EF7F0477654F0ED1301CE1604",
+   "derived_from": "D-005",
+   "relation": "Derivado de D-005: mismas 708 posiciones; geometría reducida a [lon, lat] (se omite la 3.ª coordenada = elev_geoid, que se conserva como propiedad); solo los campos RMC, site, drive, sol, elev_geoid, dist_total_m, final, Note; orden sol/site/drive. Por eso su SHA-256 difiere del original."
+  },
+  "tiles/ctx_ortho/": {
+   "files": 574,
+   "bytes": 18648506,
+   "aggregate_sha256": "99545DCB3450BC22AE1956C9D6F69D11114569E66E1F7D6F2FA9A3C1F31712E4",
+   "aggregate_method": "SHA-256 (UTF-8) de las líneas '<z>/<x>/<y>.png <SHA-256 del tile>\\n' ordenadas por ruta",
+   "derived_from": "D-004"
+  }
+ }
+}

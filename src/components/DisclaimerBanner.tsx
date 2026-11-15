@@ -1,0 +1,2 @@
+type Props = { onDismiss: () => void }
+export function DisclaimerBanner({ onDismiss }: Props) { return <section className="notice" aria-label="Limitaciones del explorador"><div><strong>Alcance educativo.</strong><p>Este explorador prepara la integración de datos de misiones NASA. Ningún resultado debe interpretarse como evaluación de seguridad, habitabilidad o transitabilidad.</p></div><button type="button" onClick={onDismiss} aria-label="Cerrar aviso">×</button></section> }

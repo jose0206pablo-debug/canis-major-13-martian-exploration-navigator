@@ -1,0 +1,4 @@
+* text=auto
+index.html text eol=lf
+# Conservar los bytes y hashes de todos los derivados auditados, incluidos JSON y paleta CRLF.
+public/data/** -text
