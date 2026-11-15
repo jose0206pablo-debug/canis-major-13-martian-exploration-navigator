@@ -2,6 +2,7 @@ import { JEZERO_NOMINAL } from '../analysis/context'
 
 /**
  * V1.5.1c · Localizador planetario compacto (panel izquierdo): UBICACIÓN → Marte → Jezero → Sector A.
+ * V1.5.1 FINAL: es el único contexto planetario de la interfaz (la vista planetaria separada se eliminó).
  * El globo usa un render LOCAL del mosaico en color Viking MDIM 2.1 (NASA/JPL/USGS, servido por NASA Mars Trek),
  * reproyectado a ortográfica (lon0 38°E, lat0 12°N, esfera de 3 396 190 m) con GDAL en tiempo de preparación:
  * la aplicación NO hace ninguna llamada externa en ejecución. Es un localizador de contexto, no cartografía
@@ -25,7 +26,7 @@ function ortho(lat: number, lon: number): [number, number] {
 }
 const [JX, JY] = ortho(c.lat, c.lon)
 
-export function PlanetaryLocator({ onPlanetary }: { onPlanetary: () => void }) {
+export function PlanetaryLocator() {
   return <aside className="planet-locator" aria-label={`${LOCATOR_SCHEME_LABEL}: Marte, Jezero y Sector A`}>
     <h2 className="ploc-head">Ubicación</h2>
     <div className="planet-locator-grid">
@@ -53,7 +54,7 @@ export function PlanetaryLocator({ onPlanetary }: { onPlanetary: () => void }) {
         <p className="ploc-place">Jezero</p>
         <p className="ploc-coords" title={CENTER_TOOLTIP}><abbr title={CENTER_TOOLTIP}>{JEZERO_CENTER_VALUE}</abbr></p>
         <p className="ploc-sector">Sector A</p>
-        <button type="button" className="ploc-open" onClick={onPlanetary} title={LOCATOR_SCHEME_LABEL}>Vista planetaria <span aria-hidden="true">↗</span></button>
+        <p className="ploc-scheme">{LOCATOR_SCHEME_LABEL}</p>
       </div>
     </div>
   </aside>
