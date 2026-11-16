@@ -1,0 +1,31 @@
+{
+  "a": {
+    "legends": [
+      "Escenario A · referencia ilustrativa"
+    ],
+    "metrics": "LONGITUD HORIZONTAL DE LA POLILÍNEA DIBUJADA\n10.28 km\nELEVACIÓN INICIAL / FINAL\n-2567.4 m / -1791.3 m\nELEVACIÓN MÍNIMA / MÁXIMA\n-2569.9 m / -1791.3 m\nDESNIVEL VERTICAL ACUMULADO (SUBIDA / BAJADA)\n+826.3 m / −50.1 m\nINTERVALO DE MUESTREO\ncada 9.99 m horizontales (máximo 10 m) · 1030 muestras\nSENSIBILIDAD DEL DESNIVEL AL MUESTREO\ncon intervalo de 40 m: +825.0 m / −48.8 m\nRECORRIDO SIN INFORMACIÓN DEL DTM (CÁLCULO CONSERVADOR)\n0.0 % (0 m)"
+  },
+  "b": {
+    "metrics": "MÉTRICA\tA\tB\tDIFERENCIA (B − A)\nDistancia horizontal\t10.28 km\t10.43 km\t+149 m\nAscenso acumulado\t826.3 m\t836.9 m\t+10.6 m\nDescenso acumulado\t50.1 m\t60.7 m\t+10.6 m\nSin datos del DTM\t0.0 %\t0.0 %\tigual",
+    "sentence": "B recorre 149 m más que A, acumula 10.6 m más de ascenso y 10.6 m más de descenso."
+  },
+  "ab": {
+    "legends": [
+      "Escenario A · referencia ilustrativa",
+      "Escenario B · alternativa"
+    ],
+    "lines": "ready"
+  },
+  "compassBefore": "rotate(0rad)",
+  "compassAfter": "rotate(-0.553596rad)",
+  "fallback": {
+    "message": "WebGL no está disponible. Vuelve al mapa 2D para seguir usando las capas, los perfiles y A/B.",
+    "close": true
+  },
+  "returned": true,
+  "extension": true,
+  "lost": true,
+  "recovered2d": true,
+  "comparisonPreserved": true,
+  "exceptions": []
+}

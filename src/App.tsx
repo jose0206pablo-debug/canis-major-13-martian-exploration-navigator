@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { SurfaceObservation, SurfaceStationList } from './surface/SurfaceObservation'
 import { locateSurfaceStations, type LocatedSurfaceStation } from './surface/stations'
@@ -13,6 +13,7 @@ import { RoutePanel, type ComparisonData, type GridStatus, type IllustrativeInfo
 import { ContextTrail, SCIENCE_DETAIL, SCIENCE_LABEL } from './components/ContextTrail'
 import { MARS_GLOBE_CREDIT, PlanetaryLocator } from './components/PlanetaryLocator'
 import { TopoLines } from './components/TopoLines'
+import type { Terrain3DProfile } from './components/Terrain3D'
 import { selectIllustrativeRoute } from './analysis/illustrative'
 import { compareScenarios, finishAlternative, sharedProfileScale, sharesEndpoints, startAlternative as startAlternativeRoute } from './analysis/compare'
 import { toProjected, type LonLat } from './analysis/geodesy'
@@ -30,6 +31,9 @@ function profilePair(grid: ElevationGrid | null, route: LonLat[]): { main: Profi
   const sampler = (x: number, y: number) => sampleBilinear(grid, x, y)
   return { main: computeProfile(vertices, sampler, PROFILE_STEP_M), sensitivity: computeProfile(vertices, sampler, PROFILE_SENSITIVITY_STEP_M) }
 }
+
+// CANIS NEXT · Relieve 3D experimental: se carga bajo demanda (chunk aparte) para no tocar el arranque del mapa 2D.
+const Terrain3D = lazy(() => import('./components/Terrain3D').then((m) => ({ default: m.Terrain3D })))
 
 type DataStatus = 'loading' | 'ready' | 'missing'
 const MISSING_DATA = 'No se encontraron los datos del mapa. Verifica que public/data/ esté incluido antes de compilar y que dist/data/ se publique junto con index.html (ver README.md).'
@@ -53,6 +57,8 @@ function App() {
   // V1.3: 'alternative' cuando es la alternativa B, que comparte exactamente origen y destino con A.
   const [routeKind, setRouteKind] = useState<'user' | 'illustrative' | 'alternative'>('user')
   // V1.5.1 FINAL: se entra siempre directamente al mapa científico; la vista planetaria separada se eliminó.
+  const [show3d, setShow3d] = useState(false)
+  const toggle3dRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -99,7 +105,7 @@ function App() {
   }, [comparingAlternative, routeMode, profiles, profilesA, referenceRoute, route])
   const referenceEndLabels = useMemo<[string, string] | undefined>(() => (illustrativeRoute ? [`Origen común · sol ${illustrativeRoute.start.sol}`, `Destino común · sol ${illustrativeRoute.end.sol}`] : undefined), [illustrativeRoute])
   function startAlternative() {
-    setSelectedSurface(null)
+    setSelectedSurface(null); setShow3d(false)
     if (!illustrativeRoute) return
     setRoute(startAlternativeRoute(illustrativeRoute.vertices[0])); setRouteKind('alternative'); setRouteMode('drawing')
   }
@@ -110,6 +116,22 @@ function App() {
     }
     setRouteMode('done')
   }
+
+  // The 3D annotations use the very same samples that drive the 2D profile and A/B metrics.
+  const terrainProfiles = useMemo<Terrain3DProfile[]>(() => {
+    if (comparison) return [
+      { id: 'a', label: 'Escenario A · referencia ilustrativa', color: '#7fdcff', profile: comparison.a },
+      { id: 'b', label: 'Escenario B · alternativa', color: '#ffffff', profile: comparison.b },
+    ]
+    if (!profiles.main) return []
+    if (routeKind === 'illustrative') return [
+      { id: 'a', label: 'Escenario A · referencia ilustrativa', color: '#7fdcff', profile: profiles.main },
+    ]
+    return [{ id: 'user', label: 'Recorrido dibujado', color: '#ffffff', profile: profiles.main }]
+  }, [comparison, profiles.main, routeKind])
+  const terrainPalette = manifest?.layers.ctx_dtm_relief.palette
+  const can3d = Boolean(grid && terrainPalette && routeMode !== 'drawing')
+  function close3d() { setShow3d(false); requestAnimationFrame(() => toggle3dRef.current?.focus()) }
 
   function toggleLayer(layerId: string) {
     setVisibleLayerIds((current) => current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId])
@@ -132,11 +154,16 @@ function App() {
     </header>
     <section className="explorer-layout" aria-label="Explorador cartográfico de Jezero">
       <aside className="left-panel panel"><PlanetaryLocator /><p className="step-kicker layers-kicker">1 · Observar · 2 · Comprender</p><LayerPanel layers={layers} visibleLayerIds={visibleLayerIds} opacities={opacities} onToggle={toggleLayer} onOpacityChange={(id, opacity) => setOpacities((current) => ({ ...current, [id]: opacity }))} /><Legend layers={activeLayers} manifest={manifest} /><SurfaceStationList stations={surfaceStations} onSelect={setSelectedSurface} disabled={routeMode === 'drawing'} /><details className="panel-details"><summary>Detalles del conjunto de datos</summary><p><strong>{SCIENCE_LABEL}</strong> · {SCIENCE_DETAIL}.</p><p>Sector A del cráter Jezero con datos de NASA: imagen CTX de 6 m, relieve de 20 m y 708 posiciones históricas de Perseverance.</p><p>Mapa 2D · CRS marciano IAU_2015:49910 (esfera de 3 396 190 m).</p><p>{MARS_GLOBE_CREDIT}</p></details></aside>
-      <section className="map-column with-trail"><ContextTrail stats={trailStats} /><div className="map-stage"><MapView surfaceStations={surfaceStations} onSurfaceSelect={setSelectedSurface} layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={(point) => { setSelectedSurface(null); setSelectedPoint(point) }} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} /></div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
+      <section className="map-column with-trail"><ContextTrail stats={trailStats} /><div className="map-stage"><MapView surfaceStations={surfaceStations} onSurfaceSelect={setSelectedSurface} layers={layers} pois={catalog.pois} visibleLayerIds={visibleLayerIds} opacities={opacities} manifest={manifest} waypoints={waypoints} elevationAt={elevationAt} onPointSelect={(point) => { setSelectedSurface(null); setSelectedPoint(point) }} onCursorChange={setCursor} drawMode={routeMode === 'drawing'} route={route} onAddVertex={addVertex} routeVariant={routeKind === 'illustrative' ? 'illustrative' : 'user'} routeEndLabels={routeEndLabels} referenceRoute={referenceRoute} referenceEndLabels={referenceEndLabels} />
+        {!show3d && <button ref={toggle3dRef} type="button" className="terrain3d-toggle" disabled={!can3d} onClick={() => setShow3d(true)}
+          title={routeMode === 'drawing' ? 'Termina o borra el trazado para abrir el relieve 3D' : grid ? 'Vista 3D experimental del DTM CTX de 20 m' : 'Cargando el modelo de elevación…'}>
+          <span aria-hidden="true">◭</span> Relieve 3D <small>experimental</small></button>}
+        {show3d && grid && terrainPalette && <Suspense fallback={<p className="terrain3d-loading" role="status">Preparando el relieve 3D…</p>}>
+          <Terrain3D grid={grid} palette={terrainPalette} profiles={terrainProfiles} onClose={close3d} /></Suspense>}</div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
         {selectedSurface && <SurfaceObservation key={selectedSurface.rmc} station={selectedSurface} onClose={() => setSelectedSurface(null)} />}
         <RoutePanel mode={routeMode} vertexCount={route.length} profile={profiles.main} sensitivity={profiles.sensitivity} gridStatus={gridStatus}
-          onStart={() => { setSelectedSurface(null); setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={finishRoute} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
+          onStart={() => { setSelectedSurface(null); setShow3d(false); setRoute([]); setRouteKind('user'); setRouteMode('drawing') }} onFinish={finishRoute} onClear={() => { setRoute([]); setRouteKind('user'); setRouteMode('idle') }}
           illustrative={illustrativeInfo} onShowIllustrative={() => { if (!illustrativeRoute) return; setSelectedSurface(null); setRoute(illustrativeRoute.vertices); setRouteKind('illustrative'); setRouteMode('done') }}
           alternativeActive={routeKind === 'alternative'} onStartAlternative={startAlternative} onUndo={() => setRoute((current) => (current.length > 1 ? current.slice(0, -1) : current))} comparison={comparison} />
         <InfoPanel point={selectedSurface ? null : selectedPoint} onClear={() => setSelectedPoint(null)} />

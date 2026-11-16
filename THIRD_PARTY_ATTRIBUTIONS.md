@@ -30,6 +30,7 @@ The following versions and licences come from the `package-lock.json` and the in
 | `proj4leaflet` | 1.0.2 | BSD-2-Clause | [Source](https://github.com/kartena/Proj4Leaflet) |
 | `react` | 19.3.1 | MIT | [Source](https://github.com/facebook/react) |
 | `react-dom` | 19.3.1 | MIT | [Source](https://github.com/facebook/react) |
+| `three` | 0.187.0 | MIT | [Source](https://github.com/mrdoob/three.js) |
 
 ### Licence notices supplied by the packages
 
@@ -177,6 +178,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+
+#### three (CANIS NEXT, 2026-11-16)
+
+Three.js 0.187.0 is loaded only when the experimental 3D terrain view opens. Its MIT notice, copied from `node_modules/three/LICENSE`, is included in the built application as `public/third_party_3d_license.txt`. The MIT licence of CANIS original code does not replace this third-party notice.
 
 ## Observaciones de superficie Perseverance — módulo V1.5
 

@@ -1,0 +1,61 @@
+{
+  "results": [
+    {
+      "viewport": "1440x900",
+      "readyMs": 1637,
+      "state": "ready",
+      "vertices": 151600,
+      "triangles": 301644,
+      "vertical1x": "×1",
+      "mapTiles": 25,
+      "vertical3x": "×3",
+      "returned2d": true
+    },
+    {
+      "viewport": "1280x800",
+      "readyMs": 751,
+      "state": "ready",
+      "vertices": 151600,
+      "triangles": 301644,
+      "vertical1x": "×1",
+      "mapTiles": 9,
+      "vertical3x": "×3",
+      "returned2d": true
+    },
+    {
+      "viewport": "1024x768",
+      "readyMs": 1357,
+      "state": "ready",
+      "vertices": 151600,
+      "triangles": 301644,
+      "vertical1x": "×1",
+      "mapTiles": 34,
+      "vertical3x": "×3",
+      "returned2d": true
+    },
+    {
+      "viewport": "390x844",
+      "readyMs": 530,
+      "state": "ready",
+      "vertices": 38190,
+      "triangles": 75600,
+      "vertical1x": "×1",
+      "mapTiles": 9,
+      "vertical3x": "×3",
+      "returned2d": true
+    },
+    {
+      "viewport": "360x800",
+      "readyMs": 482,
+      "state": "ready",
+      "vertices": 38190,
+      "triangles": 75600,
+      "vertical1x": "×1",
+      "mapTiles": 9,
+      "vertical3x": "×3",
+      "returned2d": true
+    }
+  ],
+  "externalRequests": [],
+  "exceptions": []
+}
