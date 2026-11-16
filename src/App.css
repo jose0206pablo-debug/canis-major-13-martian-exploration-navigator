@@ -497,6 +497,7 @@
 .terrain3d-exag button, .terrain3d-reset { min-width: 34px; padding: 4px 7px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-2); font-size: .7rem; font-weight: 600; cursor: pointer; }
 .terrain3d-exag button[aria-pressed="true"] { border-color: var(--accent); background: rgba(127, 220, 255, .14); color: #fff; }
 .terrain3d-reset { border-color: var(--line-strong); background: rgba(5, 7, 15, .86); }
+.terrain3d-reset[aria-pressed="true"] { border-color: var(--mars); color: #fff; background: rgba(247, 103, 20, .18); }
 .terrain3d-check { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: rgba(5, 7, 15, .86); color: var(--text-2); font-size: .68rem; }
 .terrain3d-compass { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--line-strong); border-radius: 50%; background: rgba(5, 7, 15, .86); color: #fff; font-size: .62rem; font-weight: 700; line-height: 1; text-align: center; }
 .terrain3d-compass > span { display: block; }

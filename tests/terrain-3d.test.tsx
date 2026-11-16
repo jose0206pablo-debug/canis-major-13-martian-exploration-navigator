@@ -8,6 +8,9 @@ import type { DataManifest } from '../src/data/manifest'
 import { MARS_SPHERE_RADIUS } from '../src/data/mars-crs'
 import { DEFAULT_EXAGGERATION, MESH_STRIDE_DESKTOP, MESH_STRIDE_NARROW } from '../src/terrain/config'
 import { buildTerrainMesh, paletteRgb, profileRunsTo3D, sampledIndices, toTerrainPoint } from '../src/terrain/mesh'
+import { meshColors } from '../src/terrain/mesh'
+import { buildWaypointPoints } from '../src/terrain/waypoint-points'
+import { parseWaypoints } from '../src/data/waypoints'
 
 const synthetic = (width = 5, height = 5): ElevationGrid => ({
   width, height, originX: 4573663.250853, originY: 1109693.140188,
@@ -65,11 +68,19 @@ describe('terrain 3D from the canonical DTM', () => {
       .toEqual([0.5, 0.5, 0.5])
     expect(DEFAULT_EXAGGERATION).toBe(1)
     expect([MESH_STRIDE_DESKTOP, MESH_STRIDE_NARROW]).toEqual([4, 8])
-    const html = renderToStaticMarkup(<Terrain3D grid={synthetic()} palette={[]} profiles={[]} onClose={() => {}} />)
+    const html = renderToStaticMarkup(<Terrain3D grid={synthetic()} palette={[]} profiles={[]} waypoints={[]} onClose={() => {}} />)
     expect(html).toContain('Escala vertical 1×')
     expect(html).toContain('Volver al mapa 2D')
     expect(html).toContain('No es navegación')
     expect(html).toContain('La ortoimagen CTX no se superpone')
+  })
+
+  it('converts sRGB palette stops to linear vertex colors for exact display output', () => {
+    const mesh = buildTerrainMesh(synthetic(), 4)
+    const colors = meshColors(mesh, [{ value: -2000, color: '#808080' }, { value: -1976, color: '#808080' }])
+    expect(colors[0]).toBeCloseTo(0.21586, 4)
+    expect(colors[0]).toBe(colors[1])
+    expect(colors[0]).toBe(colors[2])
   })
 })
 
@@ -95,5 +106,17 @@ describe('full audited DTM in the integrated app', () => {
       if (mesh.elevations[r * cols.length + c] !== grid.values[row * grid.width + col]) mismatches++
     }))
     expect(mismatches).toBe(0)
+  })
+
+  it('places mission positions on the existing DTM without joining them into a route', () => {
+    const source = JSON.parse(readFileSync('public/data/waypoints/m20_waypoints.geojson', 'utf8'))
+    const waypoints = parseWaypoints(source)
+    const points = buildWaypointPoints(waypoints, grid, mesh)
+    expect(waypoints).toHaveLength(708)
+    expect(points.interpolated.length / 3).toBe(22)
+    expect(points.measured.length / 3 + points.interpolated.length / 3 + points.withoutElevation).toBe(708)
+    const first = waypoints[0]
+    const projectedX = first.lon * Math.PI / 180 * MARS_SPHERE_RADIUS
+    expect(points.measured[0]).toBeCloseTo((projectedX - mesh.centerX) * mesh.eastWestFactor / 1000, 5)
   })
 })

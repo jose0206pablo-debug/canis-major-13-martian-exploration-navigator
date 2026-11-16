@@ -159,7 +159,7 @@ function App() {
           title={routeMode === 'drawing' ? 'Termina o borra el trazado para abrir el relieve 3D' : grid ? 'Vista 3D experimental del DTM CTX de 20 m' : 'Cargando el modelo de elevación…'}>
           <span aria-hidden="true">◭</span> Relieve 3D <small>experimental</small></button>}
         {show3d && grid && terrainPalette && <Suspense fallback={<p className="terrain3d-loading" role="status">Preparando el relieve 3D…</p>}>
-          <Terrain3D grid={grid} palette={terrainPalette} profiles={terrainProfiles} onClose={close3d} /></Suspense>}</div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
+          <Terrain3D grid={grid} palette={terrainPalette} profiles={terrainProfiles} waypoints={waypoints ?? []} onClose={close3d} /></Suspense>}</div><CoordinateBar cursor={cursor} elevationError={gridError} /><Attribution activeLayers={activeLayers} /></section>
       <aside className="right-panel panel">
         {selectedSurface && <SurfaceObservation key={selectedSurface.rmc} station={selectedSurface} onClose={() => setSelectedSurface(null)} />}
         <RoutePanel mode={routeMode} vertexCount={route.length} profile={profiles.main} sensitivity={profiles.sensitivity} gridStatus={gridStatus}

@@ -157,8 +157,10 @@ export function paletteRgb(stops: readonly PaletteStop[], value: number): [numbe
 
 export function meshColors(mesh: TerrainMesh, stops: readonly PaletteStop[]): Float32Array {
   const colors = new Float32Array(mesh.vertices * 3)
+  // BufferGeometry vertex colors are linear; manifest hex values are sRGB.
+  const linear = (value: number) => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
   for (let vertex = 0; vertex < mesh.vertices; vertex++) {
-    colors.set(paletteRgb(stops, mesh.elevations[vertex]), vertex * 3)
+    colors.set(paletteRgb(stops, mesh.elevations[vertex]).map(linear), vertex * 3)
   }
   return colors
 }
